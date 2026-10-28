@@ -89,19 +89,6 @@
   .seg.over { box-shadow: 0 0 0 1.5px var(--red); }
   .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; vertical-align: 0; }
 
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 12px; margin-bottom: 22px; }
-  .ecard { border: 1px solid var(--line); border-top: 4px solid var(--c, var(--blue)); border-radius: 10px; padding: 12px 14px 6px; }
-  .ecard h3 { margin: 0; font-size: 15px; }
-  .ecard .fe { font-size: 12px; color: var(--muted); margin: 1px 0 6px; min-height: 17px; }
-  .prow { padding: 9px 0 10px; border-top: 1px solid #f0f2f5; }
-  .prow .nm { font-weight: 600; font-size: 13.5px; }
-  .prow .sinv { font-size: 12px; color: #b0b7c3; margin-left: 8px; }
-  .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 3px; }
-  .trio span { display: block; font-size: 11px; color: var(--muted); }
-  .trio b { font-size: 15px; font-variant-numeric: tabular-nums; }
-  .trio b.tom { color: var(--blue); }
-  .trio b.lib { color: var(--green); }
-  .trio b.neg { color: var(--red); }
 
   /* tabla de disponibilidad */
   h2.sec { font-size: 16px; margin: 0 0 8px; }
@@ -231,7 +218,6 @@
     <!-- DISPONIBILIDAD -->
     <div id="v-disp">
       <div class="kpis" id="kpis"></div>
-      <div class="cards" id="cards"></div>
       <h2 class="sec">Por semana de faena</h2>
       <div class="scroll">
         <table class="main">
@@ -244,7 +230,7 @@
           <tbody id="tbDisp"></tbody>
         </table>
       </div>
-      <div class="hint">Disponible: volumen de la semana. Tomado: reservado para clientes (cada color es un cliente). Libre: todavía sin cliente. Si te pasás del disponible, la celda se marca en rojo.</div>
+      <div class="hint">Total: volumen de la semana. Con cliente: ya asignado (cada color es un cliente). Sin cliente: todavía sin asignar. Si asignás más que el total, la celda se marca en rojo.</div>
     </div>
 
     <!-- RESERVAS -->
@@ -410,19 +396,6 @@ function parseHeads(s) {
   const n = parseNum(s);
   return n != null && n > 0 ? n : 0;
 }
-function rangos(ep) {
-  const out = [];
-  let ini = null, fin = null, prev = -2;
-  WEEKS.forEach((r, i) => {
-    if (r.ep !== ep) return;
-    const p = r.fe.split(' al ');
-    if (ini !== null && i === prev + 1) { fin = p[1]; }
-    else { if (ini !== null) out.push(ini + ' al ' + fin); ini = p[0]; fin = p[1]; }
-    prev = i;
-  });
-  if (ini !== null) out.push(ini + ' al ' + fin);
-  return out.join(' y ');
-}
 function setEstado(txt, bad) {
   const n = $('estado');
   n.textContent = txt;
@@ -488,35 +461,26 @@ function sumas(filtro) {
   });
   return s;
 }
-function trio(d, a) {
-  const libre = d - a, neg = libre < -TOL;
-  return '<div class="trio"><div><span>Disponible</span><b>' + fmt(d) + '</b></div>' +
-    '<div><span>Tomado</span><b class="tom">' + fmt(a) + '</b></div>' +
-    '<div><span>' + (neg ? 'Excedido' : 'Libre') + '</span><b class="' + (neg ? 'neg' : 'lib') + '">' + fmt(neg ? -libre : Math.max(libre, 0)) + '</b></div></div>';
-}
-function filaProducto(nombre, d, a, ep, k) {
-  if (!d && !a) return '<div class="prow"><span class="nm">' + esc(nombre) + '</span><span class="sinv">sin volumen</span></div>';
-  return '<div class="prow"><span class="nm">' + esc(nombre) + '</span>' + trio(d, a) + segBar(d, porCliente(reservasDe(ep, k))) + '</div>';
-}
 function pintarResumen() {
   const s = sumas(null);
   let d = 0, a = 0;
   PRODS.forEach(p => { d += s[p.k].d; a += s[p.k].a; });
   const grupos = porCliente(reservasDe(null, null));
-  const libre = d - a;
-  $('kpis').innerHTML =
-    '<div class="kp"><span>Volumen disponible</span><b>' + fmt(d) + ' <small>tn</small></b></div>' +
-    '<div class="kp"><span>Tomado por clientes</span><b class="tom">' + fmt(a) + ' <small>tn</small></b></div>' +
-    '<div class="kp"><span>' + (libre < -TOL ? 'Excedido' : 'Todavía sin cliente') + '</span><b class="lib" style="' + (libre < -TOL ? 'color:var(--red)' : '') + '">' + fmt(Math.abs(libre)) + ' <small>tn</small></b></div>' +
-    '<div class="kpbar"><h3>Reparto del volumen disponible, todas las semanas y productos</h3>' + segBar(d, grupos, 'gr') +
-    '<div class="leyenda">' + grupos.map(g => '<span class="cc" style="--c:' + colorCli(g.nombre) + '"><i></i>' + esc(g.nombre) + ' <b>' + fmt(g.kg) + ' tn</b></span>').join('') +
-    '<span class="cc lb"><i></i>Libre <b>' + fmt(Math.max(libre, 0)) + ' tn</b></span></div></div>';
-
-  const tarjeta = (titulo, sub, color, ss, ep) =>
-    '<div class="ecard" style="--c:' + color + '"><h3>' + esc(titulo) + '</h3><div class="fe">' + esc(sub) + '</div>' +
-    PRODS.map(p => filaProducto(p.label, ss[p.k].d, ss[p.k].a, ep, p.k)).join('') + '</div>';
-  $('cards').innerHTML = EPOCAS.map(ep => tarjeta(ep, 'Faena ' + rangos(ep), EPCOL[ep], sumas(ep), ep)).join('') +
-    tarjeta('Total', 'Todas las épocas', '#475467', s, null);
+  const libre = d - a, over = libre < -TOL;
+  let h =
+    '<div class="kp"><span>Total</span><b>' + fmt(d) + ' <small>tn</small></b></div>' +
+    '<div class="kp"><span>Con cliente asignado</span><b class="tom">' + fmt(a) + ' <small>tn</small></b></div>' +
+    '<div class="kp"><span>' + (over ? 'Excedido' : 'Sin cliente asignado') + '</span><b class="lib"' + (over ? ' style="color:var(--red)"' : '') + '>' + fmt(Math.abs(libre)) + ' <small>tn</small></b></div>';
+  if (!d && !a) {
+    h += '<div class="kpbar"><h3>Todavía no hay volumen cargado. Cargá las cabezas de cada semana en <button class="link" id="irCarga" type="button">Carga de volumen</button> y acá aparece el total.</h3></div>';
+  } else {
+    h += '<div class="kpbar">' + segBar(d, grupos, 'gr') +
+      '<div class="leyenda">' + grupos.map(g => '<span class="cc" style="--c:' + colorCli(g.nombre) + '"><i></i>' + esc(g.nombre) + ' <b>' + fmt(g.kg) + ' tn</b></span>').join('') +
+      '<span class="cc lb"><i></i>Sin cliente <b>' + fmt(Math.max(libre, 0)) + ' tn</b></span></div></div>';
+  }
+  $('kpis').innerHTML = h;
+  const b = $('irCarga');
+  if (b) b.onclick = () => mostrar('carga');
 }
 function celdaHTML(wk, c, label) {
   const d = dispOf(wk, c), lista = asigList(wk, c);
@@ -526,14 +490,14 @@ function celdaHTML(wk, c, label) {
   const cls = libre < -TOL ? 'over' : Math.abs(libre) <= TOL ? 'full' : 'ok';
   const grupos = porCliente(lista);
   const chips = grupos.map(g => '<span class="cc" style="--c:' + colorCli(g.nombre) + '"><i></i>' + esc(g.nombre) + ' <b>' + fmt(g.kg) + '</b></span>').join('');
-  const etiqueta = cls === 'over' ? 'Excedido' : cls === 'full' ? 'Todo tomado' : 'Libre';
+  const etiqueta = cls === 'over' ? 'Excedido' : 'Sin cliente';
   const valor = cls === 'over' ? fmt(-libre) : cls === 'full' ? '0' : fmt(libre);
   return '<td class="pc"><button class="pbtn ' + cls + '" type="button" data-wk="' + wk + '" data-c="' + c + '" aria-label="Reservar ' + esc(label) + ' ' + wk + '">' +
-    '<div class="led"><span>Disponible</span><b>' + fmt(d) + '</b></div>' +
-    '<div class="led"><span>Tomado</span><b class="tom">' + fmt(a) + '</b></div>' +
+    '<div class="led"><span>Total</span><b>' + fmt(d) + '</b></div>' +
+    '<div class="led"><span>Con cliente</span><b class="tom">' + fmt(a) + '</b></div>' +
     '<div class="led lib"><span>' + etiqueta + '</span><b>' + valor + '</b></div>' +
     segBar(d, grupos) +
-    (chips ? '<div class="chs">' + chips + '</div>' : '<div class="chs sin">Sin cliente todavía</div>') + '</button></td>';
+    (chips ? '<div class="chs">' + chips + '</div>' : '<div class="chs sin">Ningún cliente asignado</div>') + '</button></td>';
 }
 function pintarTabla() {
   let h = '';
@@ -708,12 +672,12 @@ function dibujarDetalle() {
   $('dTitle').textContent = w.f + ' · ' + p.label;
   $('dSub').textContent = w.ep + ' · faena ' + w.fe + ' · embarque ' + w.e;
   $('dSum').innerHTML =
-    '<div><span>Disponible</span><b>' + fmt(d) + '</b></div>' +
-    '<div><span>Tomado</span><b>' + fmt(a) + '</b></div>' +
-    '<div><span>Libre</span><b class="' + (libre < -TOL ? 'neg' : 'pos') + '">' + fmt(libre) + '</b></div>';
+    '<div><span>Total</span><b>' + fmt(d) + '</b></div>' +
+    '<div><span>Con cliente</span><b>' + fmt(a) + '</b></div>' +
+    '<div><span>Sin cliente</span><b class="' + (libre < -TOL ? 'neg' : 'pos') + '">' + fmt(libre) + '</b></div>';
   $('dSeg').innerHTML = segBar(d, porCliente(lista), 'gr');
   if (!lista.length) {
-    $('dList').innerHTML = '<div class="dempty" style="padding-left:0">Todavía no hay reservas para esta celda.</div>';
+    $('dList').innerHTML = '<div class="dempty" style="padding-left:0">Todavía no hay clientes asignados en esta celda.</div>';
   } else {
     lista.sort((x, y) => (x.ts || 0) - (y.ts || 0));
     $('dList').innerHTML = '<table><thead><tr><th>Cliente</th><th>Comercial</th><th class="r">Tn</th><th></th></tr></thead><tbody>' +
