@@ -7,8 +7,8 @@
 <!--
   Datos en Firebase Realtime Database, bajo la ruta semanas/:
     cabezas/<semana>/{nvCK, nvSK}  -> cabezas NV con kosher y NV sin kosher
-    parametros/<clave>             -> factores de cálculo
-    celdas/<semana>/<columna>      -> kg (solo columnas manuales) y asig/<id> {cliente, comercial, kg, ts}
+    parametros/<clave>             -> factores de cálculo (rl, ba, f, m)
+    celdas/<semana>/<producto>     -> kg (carga manual) y asig/<id> {cliente, comercial, kg, ts} (reservas)
   Volúmenes en toneladas. Ingreso con correo y contraseña (Firebase Authentication).
 -->
 <style>
@@ -16,130 +16,159 @@
     color-scheme: light;
     box-sizing: border-box;
     --bg: #ffffff;
-    --text: #1a1a1a;
-    --muted: #6b6b6b;
-    --border: #cfcfcf;
-    --head-bg: #f3f3f3;
-    --row-bg: #fce4d6;
-    --green: #1e8e3e;
-    --orange: #d9822b;
-    --red: #e11d1d;
-    --yellow-bg: #ffff00;
-    --yellow-text: #1e8e3e;
-    --sub-bg: #e8eef7;
-    --tot-bg: #d5e0f2;
-    --focus: #2563eb;
+    --text: #1f2328;
+    --muted: #667085;
+    --line: #e4e7ec;
+    --soft: #f6f8fa;
+    --blue: #2563eb;
+    --blue-soft: #eef4ff;
+    --green: #16803c;
+    --green-soft: #e7f6ec;
+    --amber: #b45309;
+    --amber-soft: #fff4e0;
+    --red: #c62828;
+    --red-soft: #fdeaea;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   body {
     margin: 0;
-    padding: 24px 16px 48px;
+    padding: 24px 16px 56px;
     background: var(--bg);
     color: var(--text);
-    font-family: Calibri, Arial, "Helvetica Neue", sans-serif;
+    font-family: "Segoe UI", system-ui, -apple-system, Calibri, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.4;
   }
-  .wrap { max-width: 1480px; margin: 0 auto; }
-  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  p.sub { margin: 0; color: var(--muted); font-size: 13px; }
-  .who { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
-  button { font: inherit; cursor: pointer; }
-  .btn { border: 1px solid var(--border); background: #fff; color: var(--text); border-radius: 4px; padding: 5px 12px; font-size: 13px; }
-  .btn:hover { border-color: var(--focus); color: var(--focus); }
-  .btn.pri { background: var(--focus); border-color: var(--focus); color: #fff; font-weight: 700; }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+  button { font: inherit; cursor: pointer; color: inherit; }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .btn { border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 6px 13px; font-size: 13px; }
+  .btn:hover { border-color: var(--blue); color: var(--blue); }
+  .btn.pri { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
   .btn.pri:hover { background: #1d4ed8; color: #fff; }
-  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { margin: 0; color: var(--muted); font-size: 14px; max-width: 60ch; }
+  .who { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
 
   /* ingreso */
-  .login { max-width: 360px; margin: 40px auto; border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
-  .login h2 { margin: 0 0 4px; font-size: 16px; }
+  .login { max-width: 380px; margin: 40px auto; border: 1px solid var(--line); border-radius: 10px; padding: 22px; }
+  .login h2 { margin: 0 0 4px; font-size: 17px; }
   .login p { margin: 0 0 14px; font-size: 13px; color: var(--muted); }
   .login label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
-  .login input { display: block; width: 100%; margin-top: 3px; border: 1px solid var(--border); border-radius: 4px; padding: 7px 9px; font: inherit; color: var(--text); }
+  .login input { display: block; width: 100%; margin-top: 3px; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font: inherit; color: var(--text); }
   .err { color: var(--red); font-size: 13px; margin-top: 10px; }
 
-  /* factores */
-  details.par { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 14px; }
-  details.par summary { cursor: pointer; font-weight: 700; }
-  .parg { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px 16px; margin-top: 10px; }
+  /* pestañas */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 18px; overflow-x: auto; }
+  .tab { border: 0; background: none; padding: 10px 16px; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* resumen por época */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .ecard { border: 1px solid var(--line); border-top: 4px solid var(--c, var(--blue)); border-radius: 10px; padding: 12px 14px 8px; }
+  .ecard h3 { margin: 0; font-size: 15px; }
+  .ecard .fe { font-size: 12px; color: var(--muted); margin: 1px 0 6px; min-height: 17px; }
+  .prow { display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; padding: 7px 0; border-top: 1px solid #f0f2f5; font-size: 13px; align-items: baseline; }
+  .prow .nm { font-weight: 600; }
+  .prow .lb { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+  .prow .lb.over { color: var(--red); }
+  .prow .lb.none { color: #b0b7c3; font-weight: 400; }
+  .prow .dt { grid-column: 1 / -1; font-size: 11.5px; font-weight: 400; color: var(--muted); }
+  .bar { grid-column: 1 / -1; height: 5px; background: #eef1f5; border-radius: 3px; overflow: hidden; margin-top: 2px; }
+  .bar i { display: block; height: 100%; background: var(--c, var(--blue)); }
+  .bar.over i { background: var(--red); }
+
+  /* tabla de disponibilidad */
+  h2.sec { font-size: 16px; margin: 0 0 8px; }
+  .scroll { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; }
+  table.main { min-width: 900px; }
+  .main th { background: var(--soft); text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .main td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .main tr:last-child td { border-bottom: 0; }
+  .main tr.chg td { border-top: 2px solid #c9ced8; }
+  .main tr.stk td { background: var(--soft); color: var(--muted); font-size: 13px; }
+  .main td.wk { padding-left: 12px; white-space: nowrap; }
+  .main td.wk b { display: block; font-size: 15px; }
+  .main td.wk .fe { font-size: 12px; color: var(--muted); }
+  .main td.emb { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; color: var(--c); background: #eef2ff; background: color-mix(in srgb, var(--c) 12%, white); white-space: nowrap; }
+  .main td.pc { min-width: 150px; }
+  .pbtn { display: block; width: 100%; text-align: left; border: 1px solid transparent; border-radius: 8px; background: #fff; padding: 6px 9px 7px; }
+  .pbtn:hover { border-color: var(--blue); background: var(--blue-soft); }
+  .pbtn .big { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--green); line-height: 1.2; }
+  .pbtn .det { font-size: 11.5px; color: var(--muted); }
+  .pbtn .bar { margin-top: 5px; }
+  .pbtn.full .big { color: var(--muted); font-size: 15px; }
+  .pbtn.over .big { color: var(--red); }
+  .pbtn.over .det { color: var(--red); }
+  .none { color: #b0b7c3; padding-left: 9px; }
+  .hint { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+  /* reservas */
+  .filtros { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filtros select, .filtros input { border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: inherit; min-width: 190px; color: var(--text); background: #fff; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; font-size: 13px; background: var(--soft); }
+  .chip b { font-variant-numeric: tabular-nums; }
+  table.res { min-width: 720px; }
+  .res th { background: var(--soft); text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  .res td { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .res td.r, .res th.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .res tfoot td { font-weight: 700; background: var(--soft); border-bottom: 0; }
+  .link { border: 0; background: none; padding: 0; color: var(--blue); text-decoration: underline; text-underline-offset: 2px; text-align: left; }
+  .del { border: 0; background: none; color: var(--muted); font-size: 15px; padding: 2px 6px; }
+  .del:hover { color: var(--red); }
+  .vacio { padding: 26px 14px; text-align: center; color: var(--muted); font-size: 14px; }
+
+  /* carga */
+  .par { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+  .par h3 { margin: 0 0 8px; font-size: 14px; }
+  .parg { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 16px; }
   .parg label { font-size: 12px; color: var(--muted); display: block; }
-  .parg input { display: block; width: 100%; margin-top: 3px; border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; font: inherit; text-align: right; color: var(--text); }
-  .parn { margin: 10px 0 2px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .parg input { display: block; width: 100%; margin-top: 3px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font: inherit; text-align: right; color: var(--text); }
+  .parn { margin: 10px 0 0; font-size: 12px; color: var(--muted); line-height: 1.55; }
+  table.carga { min-width: 980px; }
+  .carga th { background: var(--soft); text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .carga td { padding: 4px 8px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .carga td.t { padding-left: 12px; white-space: nowrap; }
+  .carga tr.stk td { background: var(--soft); }
+  .carga td.calc { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; padding-right: 12px; }
+  .carga input { width: 100%; min-width: 92px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font: inherit; text-align: right; color: var(--text); background: #fff; }
+  .carga input:focus { border-color: var(--blue); }
 
-  /* tabla */
-  .scroll { overflow-x: auto; max-width: 100%; }
-  table { border-collapse: collapse; width: 100%; min-width: 1420px; font-size: 15px; }
-  th, td { border: 1px solid var(--border); padding: 6px 12px; text-align: left; font-weight: 700; }
-  thead th { background: var(--head-bg); }
-  th.title { text-align: center; font-size: 17px; }
-  th.ctr { text-align: center; }
-  .blk td { background: var(--bg); color: var(--text); }
-  .sep td { border-top: 2px solid var(--text); }
-  .g td { background: var(--row-bg); color: var(--green); }
-  .o td { background: var(--row-bg); color: var(--orange); }
-  .r td { background: var(--row-bg); color: var(--red); }
-  td.y { background: var(--yellow-bg); color: var(--yellow-text); }
-  td.nw { white-space: nowrap; }
-
-  td.in { padding: 0; min-width: 108px; vertical-align: top; }
-  td.in input {
-    display: block; width: 100%; border: 0; background: transparent; color: inherit;
-    font: inherit; font-weight: 700; text-align: right; padding: 6px 10px 2px; outline: none;
-  }
-  td.in input:focus { box-shadow: inset 0 0 0 2px var(--focus); background: #fff; color: var(--text); }
-  td.in .cv { text-align: right; padding: 6px 10px 2px; font-weight: 700; min-height: 27px; font-variant-numeric: tabular-nums; }
-  td.in .sm2 { text-align: right; padding: 0 10px 4px; font-size: 11px; font-weight: 400; color: var(--muted); line-height: 1.35; }
-  td.in .sm2 .neg { color: var(--red); }
-  td.in.calc { background-image: linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)); }
-  .cl {
-    display: block; width: calc(100% - 12px); margin: 1px 6px 5px; padding: 1px 4px;
-    font-size: 11px; font-weight: 400; text-align: center; line-height: 1.5;
-    border: 1px solid var(--border); border-radius: 3px; background: #fff; color: var(--muted);
-  }
-  .cl:hover { border-color: var(--focus); color: var(--focus); }
-  .cl.has { background: #e8f0fe; color: #1a4fb4; border-color: #aac3f2; }
-  .cl.par { background: #fff4d6; color: #8a5a00; border-color: #ecd28a; }
-  .cl.ok  { background: #e3f4e8; color: #1b7a3a; border-color: #a5d6b4; }
-  .cl.sob { background: #fde2e2; color: #b3261e; border-color: #f0a8a4; }
-
-  /* totales arriba */
-  #pie td { text-align: right; font-variant-numeric: tabular-nums; }
-  #pie td.lbl { text-align: left; white-space: nowrap; }
-  #pie .cap { display: block; font-size: 11px; font-weight: 400; color: var(--muted); line-height: 1.2; }
-  #pie .sm { display: block; font-size: 11px; font-weight: 400; color: var(--muted); line-height: 1.3; min-height: 14px; }
-  #pie .sm.neg { color: var(--red); }
-  tr.subr td { background: var(--sub-bg); color: var(--text); }
-  tr.tot td { background: var(--tot-bg); color: var(--text); border-bottom: 3px double var(--text); }
-
-  .note { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .note { margin-top: 14px; font-size: 13px; color: var(--muted); }
   .note.bad { color: var(--red); }
-  .legend { margin-top: 6px; font-size: 13px; color: var(--muted); line-height: 1.5; }
 
-  /* detalle de clientes */
-  .ov { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 12px 12px; overflow-y: auto; z-index: 20; }
-  .card { background: #fff; width: 100%; max-width: 660px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 8px 30px rgba(0,0,0,.25); }
-  .dh { display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
-  .dt { font-size: 17px; font-weight: 700; }
+  /* reservar */
+  .ov { position: fixed; inset: 0; background: rgba(15,23,42,.4); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 12px 12px; overflow-y: auto; z-index: 20; }
+  .card { background: #fff; width: 100%; max-width: 640px; border-radius: 12px; border: 1px solid var(--line); box-shadow: 0 12px 40px rgba(15,23,42,.25); }
+  .dh { display: flex; justify-content: space-between; gap: 12px; padding: 16px 18px 10px; }
+  .dt { font-size: 18px; font-weight: 700; }
   .ds { font-size: 13px; color: var(--muted); margin-top: 2px; }
   .dx { border: 0; background: none; font-size: 18px; color: var(--muted); padding: 2px 6px; }
-  .dsum { display: flex; gap: 22px; padding: 10px 16px; font-size: 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-  .dsum b { font-variant-numeric: tabular-nums; }
-  .dsum .neg { color: var(--red); }
-  .dsum .pos { color: var(--green); }
-  .dl { padding: 4px 16px; max-height: 38vh; overflow-y: auto; }
-  .dl table { min-width: 0; font-size: 14px; }
-  .dl th, .dl td { border: 0; border-bottom: 1px solid #ececec; padding: 6px 6px; font-weight: 400; }
-  .dl th { font-size: 12px; color: var(--muted); background: none; }
+  .dsum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 18px 12px; }
+  .dsum div { background: var(--soft); border-radius: 8px; padding: 8px 12px; }
+  .dsum span { display: block; font-size: 12px; color: var(--muted); }
+  .dsum b { font-size: 19px; font-variant-numeric: tabular-nums; }
+  .dsum b.pos { color: var(--green); }
+  .dsum b.neg { color: var(--red); }
+  .dl { padding: 0 18px; max-height: 32vh; overflow-y: auto; }
+  .dl table { font-size: 14px; }
+  .dl th, .dl td { border-bottom: 1px solid #eef0f3; padding: 7px 6px; text-align: left; font-weight: 400; }
+  .dl th { font-size: 12px; color: var(--muted); }
   .dl td.r, .dl th.r { text-align: right; }
-  .dl input { width: 96px; text-align: right; border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font: inherit; }
-  .dl .del { border: 0; background: none; color: var(--muted); font-size: 15px; padding: 2px 6px; }
-  .dl .del:hover { color: var(--red); }
-  .dempty { padding: 14px 16px; font-size: 14px; color: var(--muted); }
-  .df { display: grid; grid-template-columns: 1.4fr 1.1fr .8fr auto; gap: 8px; padding: 12px 16px 16px; border-top: 1px solid var(--border); }
-  .df input { border: 1px solid var(--border); border-radius: 4px; padding: 7px 9px; font: inherit; min-width: 0; width: 100%; }
-  .dmsg { padding: 0 16px 12px; font-size: 13px; color: var(--red); }
-  @media (max-width: 560px) { .df { grid-template-columns: 1fr 1fr; } .df button { grid-column: 1 / -1; } }
+  .dl input { width: 92px; text-align: right; border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px; font: inherit; }
+  .dempty { padding: 8px 18px 4px; font-size: 14px; color: var(--muted); }
+  .dtodo { padding: 10px 18px 0; font-size: 13px; }
+  .df { display: grid; grid-template-columns: 1.4fr 1.1fr .8fr auto; gap: 8px; padding: 8px 18px 18px; }
+  .df input { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font: inherit; min-width: 0; width: 100%; }
+  .dmsg { padding: 0 18px 14px; font-size: 13px; color: var(--red); margin-top: -8px; }
+  @media (max-width: 560px) { .df { grid-template-columns: 1fr 1fr; } .df button { grid-column: 1 / -1; } .dsum { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -147,7 +176,7 @@
   <div class="top">
     <div>
       <h1>Disponibilidad comercial</h1>
-      <p class="sub">Volúmenes en toneladas. Las fechas corresponden a la semana de faena (lunes a domingo). Sem01 a Sem04 son de 2027.</p>
+      <p class="sub">Volumen disponible por semana de faena, en toneladas. Tocá una celda para reservarlo a un cliente.</p>
     </div>
     <div class="who" id="who" hidden>
       <span id="whoMail"></span>
@@ -157,7 +186,7 @@
 
   <section class="login" id="login">
     <h2>Ingresar</h2>
-    <p>Usá el usuario de las semanas para ver y completar la tabla.</p>
+    <p>Usá el usuario de las semanas para ver y reservar volumen.</p>
     <label>Correo<input type="text" id="lgMail" autocomplete="username"></label>
     <label>Contraseña<input type="password" id="lgPass" autocomplete="current-password"></label>
     <button class="btn pri" id="lgGo" type="button">Ingresar</button>
@@ -165,51 +194,81 @@
   </section>
 
   <section id="app" hidden>
-    <details class="par" id="par">
-      <summary>Factores de cálculo</summary>
-      <div class="parg">
-        <label>Kg de R&amp;L Hilton por media res<input data-p="rl" inputmode="decimal" autocomplete="off"></label>
-        <label>Kg de B. Ancho Hilton por media res<input data-p="ba" inputmode="decimal" autocomplete="off"></label>
-        <label>Parte de B. Ancho que cuenta en NV c/Kosher<input data-p="f" inputmode="decimal" autocomplete="off"></label>
-        <label>Medias reses por cabeza<input data-p="m" inputmode="decimal" autocomplete="off"></label>
-        <label>Saldo inicial B. Ancho Hilton (tn)<input data-p="sIniA" inputmode="decimal" autocomplete="off"></label>
-        <label>Saldo inicial R&amp;L Hilton (tn)<input data-p="sIniR" inputmode="decimal" autocomplete="off"></label>
-      </div>
-      <p class="parn">
-        Disponible B. Ancho Hilton = (cabezas NV c/Kosher × parte + cabezas NV s/Kosher) × kg de B. Ancho × medias ÷ 1000.<br>
-        Disponible R&amp;L Hilton = (cabezas NV c/Kosher + cabezas NV s/Kosher) × kg de R&amp;L × medias ÷ 1000.<br>
-        Son las fórmulas de la planilla PROY 481 y NH. Los factores valen para todas las semanas.
-      </p>
-    </details>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-v="disp" type="button">Disponibilidad</button>
+      <button class="tab" role="tab" data-v="res" type="button">Reservas</button>
+      <button class="tab" role="tab" data-v="carga" type="button">Carga de volumen</button>
+    </div>
 
-    <div class="scroll">
-      <table>
-        <thead>
-          <tr>
-            <th rowspan="2">Época</th>
-            <th rowspan="2">Fechas faena</th>
-            <th class="title" colspan="2">SEMANA</th>
-            <th class="ctr" colspan="2">Cabezas de faena</th>
-            <th rowspan="2">B. Ancho Hilton</th>
-            <th class="ctr" colspan="3">R&amp;L Hilton</th>
-            <th rowspan="2">Menaker</th>
-            <th rowspan="2">R&amp;L 481</th>
-            <th rowspan="2">Sets 481</th>
-          </tr>
-          <tr>
-            <th>Faena</th><th>Embarque</th>
-            <th>NV c/Kosher</th><th>NV s/Kosher</th>
-            <th>Disponible</th><th>M2000</th><th>Fritz</th>
-          </tr>
-        </thead>
-        <tbody id="pie"></tbody>
-        <tbody id="cuerpo"></tbody>
-      </table>
+    <!-- DISPONIBILIDAD -->
+    <div id="v-disp">
+      <div class="cards" id="cards"></div>
+      <h2 class="sec">Por semana de faena</h2>
+      <div class="scroll">
+        <table class="main">
+          <thead>
+            <tr>
+              <th>Faena</th><th>Época</th><th>Embarque</th>
+              <th>B. Ancho Hilton</th><th>R&amp;L Hilton</th><th>Menaker</th><th>R&amp;L 481</th><th>Sets 481</th>
+            </tr>
+          </thead>
+          <tbody id="tbDisp"></tbody>
+        </table>
+      </div>
+      <div class="hint">El número grande es el volumen libre. Verde: queda volumen. Gris: todo reservado. Rojo: reservaste de más.</div>
     </div>
+
+    <!-- RESERVAS -->
+    <div id="v-res" hidden>
+      <div class="filtros">
+        <select id="fCom" aria-label="Filtrar por comercial"></select>
+        <input id="fCli" type="text" placeholder="Buscar cliente" autocomplete="off">
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="scroll">
+        <table class="res">
+          <thead>
+            <tr><th>Comercial</th><th>Cliente</th><th>Faena</th><th>Época</th><th>Producto</th><th class="r">Tn</th><th></th></tr>
+          </thead>
+          <tbody id="tbRes"></tbody>
+          <tfoot id="tfRes"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- CARGA -->
+    <div id="v-carga" hidden>
+      <div class="par">
+        <h3>Factores de cálculo</h3>
+        <div class="parg">
+          <label>Kg de R&amp;L Hilton por media res<input data-p="rl" inputmode="decimal" autocomplete="off"></label>
+          <label>Kg de B. Ancho Hilton por media res<input data-p="ba" inputmode="decimal" autocomplete="off"></label>
+          <label>Parte de B. Ancho que cuenta en NV c/Kosher<input data-p="f" inputmode="decimal" autocomplete="off"></label>
+          <label>Medias reses por cabeza<input data-p="m" inputmode="decimal" autocomplete="off"></label>
+        </div>
+        <p class="parn">
+          Disponible B. Ancho Hilton = (cabezas NV c/Kosher × parte + cabezas NV s/Kosher) × kg de B. Ancho × medias ÷ 1000.<br>
+          Disponible R&amp;L Hilton = (cabezas NV c/Kosher + cabezas NV s/Kosher) × kg de R&amp;L × medias ÷ 1000.<br>
+          Son las fórmulas de la planilla PROY 481 y NH, y los factores valen para todas las semanas.
+        </p>
+      </div>
+      <div class="scroll">
+        <table class="carga">
+          <thead>
+            <tr>
+              <th>Faena</th><th>Fechas</th>
+              <th>Cabezas NV c/Kosher</th><th>Cabezas NV s/Kosher</th>
+              <th>B. Ancho Hilton (calculado)</th><th>R&amp;L Hilton (calculado)</th>
+              <th>Menaker</th><th>R&amp;L 481</th><th>Sets 481</th>
+            </tr>
+          </thead>
+          <tbody id="tbCarga"></tbody>
+        </table>
+      </div>
+      <div class="hint">Cargá las cabezas de cada semana y el volumen de Menaker, R&amp;L 481 y Sets 481. Los casilleros de Stk Caj y Stk Q son informativos y no entran en los totales.</div>
+    </div>
+
     <div class="note" id="estado"></div>
-    <div class="legend">
-      Cargá las cabezas NV de cada semana: el disponible de B. Ancho Hilton y R&amp;L Hilton se calcula solo. M2000 y Fritz reparten el R&amp;L Hilton y Menaker, R&amp;L 481 y Sets 481 se cargan a mano. Con el botón de cada celda asignás clientes: verde si todo está asignado, amarillo si falta y rojo si te pasás. El saldo acumulado arrastra lo que sobra o falta de una semana a la siguiente. Los totales de arriba no incluyen Stk Caj ni Stk Q.
-    </div>
   </section>
 </div>
 
@@ -221,11 +280,12 @@
     </div>
     <div class="dsum" id="dSum"></div>
     <div class="dl" id="dList"></div>
+    <div class="dtodo"><button class="link" id="dTodo" type="button"></button></div>
     <div class="df">
       <input id="dCli" placeholder="Cliente" list="listCli" autocomplete="off">
       <input id="dCom" placeholder="Comercial" list="listCom" autocomplete="off">
       <input id="dKg" placeholder="Tn" inputmode="decimal" autocomplete="off">
-      <button class="btn pri" id="dAdd" type="button">Agregar</button>
+      <button class="btn pri" id="dAdd" type="button">Guardar reserva</button>
     </div>
     <div class="dmsg" id="dMsg" hidden></div>
     <datalist id="listCli"></datalist>
@@ -261,44 +321,41 @@ const MSG = {
   'auth/network-request-failed': 'Sin conexión con Firebase. Revisá internet.'
 };
 
-/* ---------- estructura de la tabla ---------- */
-/* calc: el disponible se calcula con las cabezas · bucket: solo reparte (clientes) · manual: se carga a mano */
-const COLS = [
-  { k: 'ancho',   label: 'B. Ancho Hilton',    type: 'calc' },
-  { k: 'rlh',     label: 'R&L Hilton',         type: 'calc', noBtn: true },
-  { k: 'm2000',   label: 'R&L Hilton M2000',   type: 'bucket' },
-  { k: 'fritz',   label: 'R&L Hilton Fritz',   type: 'bucket' },
-  { k: 'menaker', label: 'Menaker',            type: 'manual' },
-  { k: 'rl481',   label: 'R&L 481',            type: 'manual' },
-  { k: 'sets481', label: 'Sets 481',           type: 'manual' }
+/* ---------- estructura ---------- */
+/* calc: el disponible sale de las cabezas · el resto se carga a mano */
+const PRODS = [
+  { k: 'ancho',   label: 'B. Ancho Hilton', calc: true },
+  { k: 'rlh',     label: 'R&L Hilton',      calc: true },
+  { k: 'menaker', label: 'Menaker' },
+  { k: 'rl481',   label: 'R&L 481' },
+  { k: 'sets481', label: 'Sets 481' }
 ];
-const CFG = {}; COLS.forEach(c => { CFG[c.k] = c; });
+const PR = {}; PRODS.forEach(p => { PR[p.k] = p; });
 const HEADS = [
   { f: 'nvCK', label: 'NV c/Kosher' },
   { f: 'nvSK', label: 'NV s/Kosher' }
 ];
 const EPOCAS = ['Aéreos', 'Marítimos', 'Full levy'];
-const ROWS = [
-  { blk: true, f: 'Stk Caj', key: 'StkCaj' },
-  { blk: true, f: 'Stk Q', key: 'StkQ' },
-  { f: 'Sem44', e: 'Sem45', fe: '26/10 al 01/11', ep: 'Aéreos',    cls: 'g sep', ey: true },
-  { f: 'Sem45', e: 'Sem46', fe: '02/11 al 08/11', ep: 'Aéreos',    cls: 'g',     ey: true },
-  { f: 'Sem46', e: 'Sem47', fe: '09/11 al 15/11', ep: 'Marítimos', cls: 'g' },
-  { f: 'Sem47', e: 'Sem48', fe: '16/11 al 22/11', ep: 'Aéreos',    cls: 'o' },
-  { f: 'Sem48', e: 'Sem49', fe: '23/11 al 29/11', ep: 'Aéreos',    cls: 'o' },
-  { f: 'Sem49', e: 'Sem50', fe: '30/11 al 06/12', ep: 'Aéreos',    cls: 'o' },
-  { f: 'Sem50', e: 'Sem51', fe: '07/12 al 13/12', ep: 'Aéreos',    cls: 'o' },
-  { f: 'Sem51', e: 'Sem52', fe: '14/12 al 20/12', ep: 'Full levy', cls: 'r sep' },
-  { f: 'Sem52', e: 'Sem53', fe: '21/12 al 27/12', ep: 'Full levy', cls: 'r' },
-  { f: 'Sem53', e: 'Sem01', fe: '28/12 al 03/01', ep: 'Full levy', cls: 'r' },
-  { f: 'Sem01', e: 'Sem02', fe: '04/01 al 10/01', ep: 'Full levy', cls: 'r' },
-  { f: 'Sem02', e: 'Sem03', fe: '11/01 al 17/01', ep: 'Full levy', cls: 'r' },
-  { f: 'Sem03', e: 'Sem04', fe: '18/01 al 24/01', ep: 'Full levy', cls: 'r' },
-  { f: 'Sem04', e: 'Sem05', fe: '25/01 al 31/01', ep: 'Full levy', cls: 'r' }
+const EPCOL = { 'Aéreos': '#2563eb', 'Marítimos': '#0f8f7e', 'Full levy': '#7c3aed' };
+const STK = [{ f: 'Stk Caj', key: 'StkCaj' }, { f: 'Stk Q', key: 'StkQ' }];
+const WEEKS = [
+  { f: 'Sem44', e: 'Sem45', fe: '26/10 al 01/11', ep: 'Aéreos' },
+  { f: 'Sem45', e: 'Sem46', fe: '02/11 al 08/11', ep: 'Aéreos' },
+  { f: 'Sem46', e: 'Sem47', fe: '09/11 al 15/11', ep: 'Marítimos' },
+  { f: 'Sem47', e: 'Sem48', fe: '16/11 al 22/11', ep: 'Aéreos' },
+  { f: 'Sem48', e: 'Sem49', fe: '23/11 al 29/11', ep: 'Aéreos' },
+  { f: 'Sem49', e: 'Sem50', fe: '30/11 al 06/12', ep: 'Aéreos' },
+  { f: 'Sem50', e: 'Sem51', fe: '07/12 al 13/12', ep: 'Aéreos' },
+  { f: 'Sem51', e: 'Sem52', fe: '14/12 al 20/12', ep: 'Full levy' },
+  { f: 'Sem52', e: 'Sem53', fe: '21/12 al 27/12', ep: 'Full levy' },
+  { f: 'Sem53', e: 'Sem01', fe: '28/12 al 03/01', ep: 'Full levy' },
+  { f: 'Sem01', e: 'Sem02', fe: '04/01 al 10/01', ep: 'Full levy' },
+  { f: 'Sem02', e: 'Sem03', fe: '11/01 al 17/01', ep: 'Full levy' },
+  { f: 'Sem03', e: 'Sem04', fe: '18/01 al 24/01', ep: 'Full levy' },
+  { f: 'Sem04', e: 'Sem05', fe: '25/01 al 31/01', ep: 'Full levy' }
 ];
-const keyOf = r => r.key || r.f;
-/* valores de la planilla PROY 481 y NH (fila de Sem 44) */
-const DEF = { rl: 7.7, ba: 2.5, f: 0.35, m: 2, sIniA: 0.7, sIniR: 0 };
+/* factores de la planilla PROY 481 y NH (fila de Sem 44) */
+const DEF = { rl: 7.7, ba: 2.5, f: 0.35, m: 2 };
 const TOL = 0.005;
 
 /* ---------- utilidades ---------- */
@@ -326,8 +383,8 @@ function parseHeads(s) {
 function rangos(ep) {
   const out = [];
   let ini = null, fin = null, prev = -2;
-  ROWS.forEach((r, i) => {
-    if (r.blk || r.ep !== ep) return;
+  WEEKS.forEach((r, i) => {
+    if (r.ep !== ep) return;
     const p = r.fe.split(' al ');
     if (ini !== null && i === prev + 1) { fin = p[1]; }
     else { if (ini !== null) out.push(ini + ' al ' + fin); ini = p[0]; fin = p[1]; }
@@ -344,108 +401,164 @@ function setEstado(txt, bad) {
 const guardarError = e => setEstado('No se pudo guardar (' + (e && e.code ? e.code : 'error') + '). Revisá la conexión y las reglas de Firebase.', true);
 
 /* ---------- datos ---------- */
-let cells = {};   // { semana: { columna: { kg, asig: { id: {cliente, comercial, kg} } } } }
+let cells = {};   // { semana: { producto: { kg, asig: { id: {cliente, comercial, kg, ts} } } } }
 let cab = {};     // { semana: { nvCK, nvSK } }
-let params = {};  // { rl, ba, f, m, sIniA, sIniR }
+let params = {};  // { rl, ba, f, m }
 const cell = (wk, c) => (cells[wk] && cells[wk][c]) || {};
 const kgOf = (wk, c) => Number(cell(wk, c).kg) || 0;
 const asigList = (wk, c) => Object.entries(cell(wk, c).asig || {}).map(([id, a]) => Object.assign({ id }, a));
 const asigOf = (wk, c) => asigList(wk, c).reduce((a, x) => a + (Number(x.kg) || 0), 0);
 const rutaCelda = (wk, c) => 'semanas/celdas/' + wk + '/' + c;
-
 const hd = (wk, f) => Number((cab[wk] || {})[f]) || 0;
-const pv = k => (params[k] != null && params[k] !== '' && isFinite(Number(params[k]))) ? Number(params[k]) : DEF[k];
+const pv = k => (params[k] != null && params[k] !== '' && isFinite(Number(params[k])) && Number(params[k]) > 0) ? Number(params[k]) : DEF[k];
 
 /* fórmulas de la planilla (toneladas) */
 const dispAncho = wk => (hd(wk, 'nvCK') * pv('f') + hd(wk, 'nvSK')) * pv('ba') * pv('m') / 1000;
 const dispRlh   = wk => (hd(wk, 'nvCK') + hd(wk, 'nvSK')) * pv('rl') * pv('m') / 1000;
-const dispOf = (wk, c) => c === 'ancho' ? dispAncho(wk) : c === 'rlh' ? dispRlh(wk) : CFG[c].type === 'manual' ? kgOf(wk, c) : null;
-const asigTot = (wk, c) => c === 'rlh' ? asigOf(wk, 'm2000') + asigOf(wk, 'fritz') : asigOf(wk, c);
+const dispOf = (wk, c) => c === 'ancho' ? dispAncho(wk) : c === 'rlh' ? dispRlh(wk) : kgOf(wk, c);
 
-/* saldo acumulado: saldo anterior + disponible - asignado */
-let saldo = {};
-function calcSaldo() {
-  saldo = {};
-  let a = pv('sIniA'), r = pv('sIniR');
-  ROWS.forEach(row => {
-    if (row.blk) return;
-    const wk = keyOf(row);
-    a += dispAncho(wk) - asigOf(wk, 'ancho');
-    r += dispRlh(wk) - asigTot(wk, 'rlh');
-    saldo[wk] = { ancho: a, rlh: r };
+/* ---------- disponibilidad ---------- */
+function sumas(filtro) {
+  const s = {};
+  PRODS.forEach(p => { s[p.k] = { d: 0, a: 0 }; });
+  WEEKS.forEach(w => {
+    if (filtro && w.ep !== filtro) return;
+    PRODS.forEach(p => { s[p.k].d += dispOf(w.f, p.k); s[p.k].a += asigOf(w.f, p.k); });
   });
+  return s;
 }
-
-/* ---------- tabla ---------- */
-let construida = false;
-function construirTabla() {
-  if (construida) return;
-  construida = true;
-
+function filaProducto(nombre, d, a) {
+  if (!d && !a) return '<div class="prow"><span class="nm">' + esc(nombre) + '</span><span class="lb none">—</span></div>';
+  const libre = d - a, over = libre < -TOL;
+  const pct = d > 0 ? Math.min(100, a / d * 100) : 100;
+  return '<div class="prow"><span class="nm">' + esc(nombre) + '</span>' +
+    '<span class="lb' + (over ? ' over' : '') + '">' + (over ? '−' + fmt(-libre) : fmt(libre)) + ' tn libre</span>' +
+    '<span class="dt">' + (a ? 'reservado ' + fmt(a) + ' de ' : 'disponible ') + fmt(d) + '</span>' +
+    '<span class="bar' + (over ? ' over' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></span></div>';
+}
+function pintarCards() {
+  const tarjeta = (titulo, sub, color, s) =>
+    '<div class="ecard" style="--c:' + color + '"><h3>' + esc(titulo) + '</h3><div class="fe">' + esc(sub) + '</div>' +
+    PRODS.map(p => filaProducto(p.label, s[p.k].d, s[p.k].a)).join('') + '</div>';
+  let h = EPOCAS.map(ep => tarjeta(ep, 'Faena ' + rangos(ep), EPCOL[ep], sumas(ep))).join('');
+  h += tarjeta('Total', 'Todas las épocas', '#475467', sumas(null));
+  $('cards').innerHTML = h;
+}
+function celdaHTML(wk, c, label) {
+  const d = dispOf(wk, c), a = asigOf(wk, c);
+  if (!d && !a) return '<td class="pc"><span class="none">—</span></td>';
+  const libre = d - a;
+  const cls = libre < -TOL ? 'over' : Math.abs(libre) <= TOL ? 'full' : 'ok';
+  const pct = d > 0 ? Math.min(100, a / d * 100) : 100;
+  const big = cls === 'full' ? 'Completo' : cls === 'over' ? '−' + fmt(-libre) : fmt(libre);
+  const det = cls === 'over' ? 'excedido · reservado ' + fmt(a) + ' de ' + fmt(d)
+    : cls === 'full' ? 'reservado ' + fmt(a) + ' de ' + fmt(d)
+    : a ? 'libre · reservado ' + fmt(a) + ' de ' + fmt(d) : 'libre de ' + fmt(d);
+  return '<td class="pc"><button class="pbtn ' + cls + '" type="button" data-wk="' + wk + '" data-c="' + c + '" aria-label="Reservar ' + esc(label) + ' ' + wk + '">' +
+    '<div class="big">' + big + '</div><div class="det">' + esc(det) + '</div>' +
+    '<div class="bar' + (cls === 'over' ? ' over' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></div></button></td>';
+}
+function pintarTabla() {
   let h = '';
-  const celdaTotal = (attr, c, cap) =>
-    '<td ' + attr + ' data-t="' + (c ? CFG[c].type : 'head') + '"><span class="cap">' + esc(cap) +
-    '</span><span class="v">0</span><span class="sm"></span></td>';
-  EPOCAS.forEach(ep => {
-    h += '<tr class="subr"><td class="lbl" colspan="4">Total ' + esc(ep) +
-      '<span class="cap">Faena: ' + esc(rangos(ep)) + '</span></td>' +
-      HEADS.map(x => celdaTotal('data-hsub="' + esc(ep) + '|' + x.f + '"', null, x.label)).join('') +
-      COLS.map(c => celdaTotal('data-sub="' + esc(ep) + '|' + c.k + '"', c.k, c.label)).join('') + '</tr>';
+  STK.forEach(s => {
+    h += '<tr class="stk"><td class="wk" colspan="3">' + esc(s.f) + '</td>' +
+      PRODS.map(p => { const kg = kgOf(s.key, p.k); return '<td class="pc"><span class="none">' + (kg ? fmt(kg) : '—') + '</span></td>'; }).join('') + '</tr>';
   });
-  h += '<tr class="tot"><td class="lbl" colspan="4">Total general<span class="cap">Todas las épocas</span></td>' +
-    HEADS.map(x => celdaTotal('data-htot="' + x.f + '"', null, x.label)).join('') +
-    COLS.map(c => celdaTotal('data-tot="' + c.k + '"', c.k, c.label)).join('') + '</tr>';
-  $('pie').innerHTML = h;
-
-  let b = '';
-  ROWS.forEach(r => {
-    const k = keyOf(r);
-    if (r.blk) {
-      let t = '<td></td><td></td><td>' + esc(r.f) + '</td><td></td><td></td><td></td>';
-      COLS.forEach(c => {
-        t += CFG[c.k].type === 'bucket'
-          ? '<td></td>'
-          : '<td class="in" data-wk="' + k + '" data-c="' + c.k + '" data-t="stk"><input type="text" inputmode="decimal" autocomplete="off" aria-label="' + esc(r.f + ' ' + c.label) + '"></td>';
-      });
-      b += '<tr class="blk">' + t + '</tr>';
-      return;
-    }
-    let t = '<td>' + esc(r.ep) + '</td><td class="nw">' + esc(r.fe).replace(/ /g, '&nbsp;') + '</td><td>' + esc(r.f) + '</td><td' +
-      (r.ey ? ' class="y"' : '') + '>' + esc(r.e) + '</td>';
-    HEADS.forEach(x => {
-      t += '<td class="in" data-wk="' + k + '" data-h="' + x.f + '"><input type="text" inputmode="numeric" autocomplete="off" aria-label="' + esc(r.f + ' cabezas ' + x.label) + '"></td>';
-    });
-    COLS.forEach(c => {
-      const base = 'data-wk="' + k + '" data-c="' + c.k + '" data-t="' + c.type + '"';
-      if (c.type === 'manual') {
-        t += '<td class="in" ' + base + '><input type="text" inputmode="decimal" autocomplete="off" aria-label="' + esc(r.f + ' ' + c.label) + '"><button class="cl" type="button">Clientes</button></td>';
-      } else if (c.type === 'calc') {
-        t += '<td class="in calc" ' + base + '><div class="cv"></div>' + (c.noBtn ? '' : '<button class="cl" type="button">Clientes</button>') + '<div class="sm2"></div></td>';
-      } else {
-        t += '<td class="in" ' + base + '><div class="cv"></div><button class="cl" type="button">Clientes</button></td>';
-      }
-    });
-    b += '<tr class="' + r.cls + '">' + t + '</tr>';
+  let prev = null;
+  WEEKS.forEach(w => {
+    h += '<tr' + (prev && prev !== w.ep ? ' class="chg"' : '') + '><td class="wk"><b>' + esc(w.f) + '</b><span class="fe">' + esc(w.fe) + '</span></td>' +
+      '<td><span class="pill" style="--c:' + EPCOL[w.ep] + '">' + esc(w.ep) + '</span></td><td class="emb">' + esc(w.e) + '</td>' +
+      PRODS.map(p => celdaHTML(w.f, p.k, p.label)).join('') + '</tr>';
+    prev = w.ep;
   });
-  $('cuerpo').innerHTML = b;
+  $('tbDisp').innerHTML = h;
+}
+$('tbDisp').addEventListener('click', ev => {
+  const b = ev.target.closest('.pbtn');
+  if (b) abrirDetalle(b.dataset.wk, b.dataset.c);
+});
 
-  $('cuerpo').addEventListener('change', ev => {
+/* ---------- reservas ---------- */
+const fil = { com: '', cli: '' };
+function todasLasReservas() {
+  const out = [];
+  WEEKS.forEach((w, i) => PRODS.forEach(p => asigList(w.f, p.k).forEach(a => out.push({ w, i, p, a }))));
+  out.sort((x, y) => x.i - y.i || (x.a.ts || 0) - (y.a.ts || 0));
+  return out;
+}
+function pintarReservas() {
+  const todas = todasLasReservas();
+  const coms = Array.from(new Set(todas.map(r => r.a.comercial).filter(Boolean))).sort();
+  if (fil.com && coms.indexOf(fil.com) < 0) fil.com = '';
+  $('fCom').innerHTML = '<option value="">Todos los comerciales</option>' +
+    coms.map(c => '<option value="' + esc(c) + '"' + (c === fil.com ? ' selected' : '') + '>' + esc(c) + '</option>').join('');
+  const q = fil.cli.trim().toLowerCase();
+  const lista = todas.filter(r => (!fil.com || r.a.comercial === fil.com) && (!q || String(r.a.cliente || '').toLowerCase().indexOf(q) >= 0));
+
+  const porCli = {};
+  lista.forEach(r => { const k = r.a.cliente || 'Sin cliente'; porCli[k] = (porCli[k] || 0) + (Number(r.a.kg) || 0); });
+  $('chips').innerHTML = Object.keys(porCli).sort((a, b) => porCli[b] - porCli[a])
+    .map(k => '<span class="chip">' + esc(k) + ' <b>' + fmt(porCli[k]) + ' tn</b></span>').join('');
+
+  if (!lista.length) {
+    $('tbRes').innerHTML = '<tr><td colspan="7" class="vacio">' + (todas.length ? 'Ninguna reserva coincide con el filtro.' : 'Todavía no hay reservas. Tocá una celda en Disponibilidad para guardar la primera.') + '</td></tr>';
+    $('tfRes').innerHTML = '';
+    return;
+  }
+  $('tbRes').innerHTML = lista.map(r =>
+    '<tr><td>' + esc(r.a.comercial || '—') + '</td><td>' + esc(r.a.cliente) + '</td>' +
+    '<td><button class="link" type="button" data-wk="' + r.w.f + '" data-c="' + r.p.k + '">' + esc(r.w.f) + '</button> <span style="color:var(--muted);font-size:12px">' + esc(r.w.fe) + '</span></td>' +
+    '<td><span class="pill" style="--c:' + EPCOL[r.w.ep] + '">' + esc(r.w.ep) + '</span></td><td>' + esc(r.p.label) + '</td>' +
+    '<td class="r">' + fmt(Number(r.a.kg) || 0) + '</td>' +
+    '<td><button class="del" type="button" data-rdel="' + r.w.f + '|' + r.p.k + '|' + esc(r.a.id) + '" aria-label="Quitar reserva de ' + esc(r.a.cliente) + '">✕</button></td></tr>').join('');
+  $('tfRes').innerHTML = '<tr><td colspan="5">Total</td><td class="r">' + fmt(lista.reduce((s, r) => s + (Number(r.a.kg) || 0), 0)) + '</td><td></td></tr>';
+}
+$('fCom').addEventListener('change', ev => { fil.com = ev.target.value; pintarReservas(); });
+$('fCli').addEventListener('input', ev => { fil.cli = ev.target.value; pintarReservas(); });
+$('tbRes').addEventListener('click', ev => {
+  const l = ev.target.closest('.link');
+  if (l) { abrirDetalle(l.dataset.wk, l.dataset.c); return; }
+  const d = ev.target.closest('[data-rdel]');
+  if (d) {
+    const p = d.dataset.rdel.split('|');
+    remove(ref(db, rutaCelda(p[0], p[1]) + '/asig/' + p[2])).catch(guardarError);
+  }
+});
+
+/* ---------- carga de volumen ---------- */
+let cargaLista = false;
+function construirCarga() {
+  if (cargaLista) return;
+  cargaLista = true;
+  let h = '';
+  STK.forEach(s => {
+    h += '<tr class="stk"><td class="t">' + esc(s.f) + '</td><td></td><td></td><td></td><td></td><td></td>' +
+      ['menaker', 'rl481', 'sets481'].map(k => '<td><input type="text" inputmode="decimal" autocomplete="off" data-wk="' + s.key + '" data-c="' + k + '" aria-label="' + esc(s.f + ' ' + PR[k].label) + '"></td>').join('') + '</tr>';
+  });
+  WEEKS.forEach(w => {
+    h += '<tr><td class="t"><b>' + esc(w.f) + '</b></td><td class="t" style="color:var(--muted)">' + esc(w.fe) + '</td>' +
+      HEADS.map(x => '<td><input type="text" inputmode="numeric" autocomplete="off" data-wk="' + w.f + '" data-h="' + x.f + '" aria-label="' + esc(w.f + ' cabezas ' + x.label) + '"></td>').join('') +
+      '<td class="calc" data-wk="' + w.f + '" data-calc="ancho"></td><td class="calc" data-wk="' + w.f + '" data-calc="rlh"></td>' +
+      ['menaker', 'rl481', 'sets481'].map(k => '<td><input type="text" inputmode="decimal" autocomplete="off" data-wk="' + w.f + '" data-c="' + k + '" aria-label="' + esc(w.f + ' ' + PR[k].label) + '"></td>').join('') + '</tr>';
+  });
+  $('tbCarga').innerHTML = h;
+
+  $('tbCarga').addEventListener('change', ev => {
     const inp = ev.target;
     if (inp.tagName !== 'INPUT') return;
-    const td = inp.closest('td');
-    if (td.dataset.h) {
+    if (inp.dataset.h) {
       const n = parseHeads(inp.value);
-      const r = ref(db, 'semanas/cabezas/' + td.dataset.wk + '/' + td.dataset.h);
+      const r = ref(db, 'semanas/cabezas/' + inp.dataset.wk + '/' + inp.dataset.h);
       (n ? set(r, n) : remove(r)).catch(guardarError);
       inp.value = n ? fmt(n) : '';
-      return;
+    } else {
+      const n = parseTn(inp.value);
+      const r = ref(db, rutaCelda(inp.dataset.wk, inp.dataset.c) + '/kg');
+      (n ? set(r, n) : remove(r)).catch(guardarError);
+      inp.value = n ? fmt(n) : '';
     }
-    const r = ref(db, rutaCelda(td.dataset.wk, td.dataset.c) + '/kg');
-    const n = parseTn(inp.value);
-    (n ? set(r, n) : remove(r)).catch(guardarError);
-    inp.value = n ? fmt(n) : '';
   });
-  $('cuerpo').addEventListener('keydown', ev => {
+  $('tbCarga').addEventListener('keydown', ev => {
     const inp = ev.target;
     if (inp.tagName !== 'INPUT') return;
     let dir = 0;
@@ -461,101 +574,17 @@ function construirTabla() {
       if (nx) { ev.preventDefault(); nx.focus(); nx.select(); return; }
     }
   });
-  $('cuerpo').addEventListener('click', ev => {
-    const btn = ev.target.closest('.cl');
-    if (!btn) return;
-    const td = btn.closest('td');
-    abrirDetalle(td.dataset.wk, td.dataset.c);
+}
+function pintarCarga() {
+  $('tbCarga').querySelectorAll('input').forEach(inp => {
+    if (document.activeElement === inp) return;
+    const n = inp.dataset.h ? hd(inp.dataset.wk, inp.dataset.h) : kgOf(inp.dataset.wk, inp.dataset.c);
+    inp.value = n ? fmt(n) : '';
   });
-}
-
-function estadoBoton(a, d) {
-  return a > d + TOL ? ' sob' : (d > 0 && Math.abs(a - d) <= TOL ? ' ok' : ' par');
-}
-
-function pintarCelda(td) {
-  const wk = td.dataset.wk;
-  const inp = td.querySelector('input');
-  if (td.dataset.h) {                       // cabezas
-    const n = hd(wk, td.dataset.h);
-    if (document.activeElement !== inp) inp.value = n ? fmt(n) : '';
-    return;
-  }
-  const c = td.dataset.c, t = td.dataset.t;
-  if (t === 'stk') {                        // Stk Caj / Stk Q
-    const kg = kgOf(wk, c);
-    if (document.activeElement !== inp) inp.value = kg ? fmt(kg) : '';
-    return;
-  }
-  const btn = td.querySelector('.cl');
-  const lista = asigList(wk, c);
-  const a = asigTot(wk, c);
-  if (t === 'manual') {
-    const kg = kgOf(wk, c);
-    if (document.activeElement !== inp) inp.value = kg ? fmt(kg) : '';
-    const propia = lista.reduce((s, x) => s + (Number(x.kg) || 0), 0);
-    btn.className = 'cl' + (lista.length ? estadoBoton(propia, kg) : '');
-    btn.textContent = lista.length ? 'Asignado ' + fmt(propia) + ' de ' + fmt(kg) : 'Clientes';
-    return;
-  }
-  if (t === 'calc') {
-    const d = dispOf(wk, c);
-    td.querySelector('.cv').textContent = d ? fmt(d) : '';
-    const sm = td.querySelector('.sm2');
-    const s = saldo[wk] ? saldo[wk][c] : 0;
-    const lineaSaldo = '<div class="' + (s < -TOL ? 'neg' : '') + '">saldo acum. ' + fmt(s) + '</div>';
-    if (c === 'ancho') {
-      btn.className = 'cl' + (lista.length ? estadoBoton(a, d) : '');
-      btn.textContent = lista.length ? 'Asignado ' + fmt(a) + ' de ' + fmt(d) : 'Clientes';
-      sm.innerHTML = lineaSaldo;
-    } else {
-      const libre = d - a;
-      sm.innerHTML = (d || a ? '<div class="' + (libre < -TOL ? 'neg' : '') + '">asignado ' + fmt(a) + ' · libre ' + fmt(libre) + '</div>' : '') + lineaSaldo;
-    }
-    return;
-  }
-  /* bucket */
-  td.querySelector('.cv').textContent = a ? fmt(a) : '';
-  btn.className = 'cl' + (lista.length ? ' has' : '');
-  btn.textContent = lista.length ? lista.length + (lista.length === 1 ? ' cliente' : ' clientes') : 'Clientes';
-}
-
-function pintarTotal(td, d, a) {
-  const t = td.dataset.t;
-  const v = td.querySelector('.v'), sm = td.querySelector('.sm');
-  if (t === 'head') { v.textContent = fmt(d); sm.textContent = ''; sm.className = 'sm'; return; }
-  if (t === 'bucket') { v.textContent = fmt(a); sm.textContent = ''; sm.className = 'sm'; return; }
-  v.textContent = fmt(d);
-  if (!d && !a) { sm.textContent = ''; sm.className = 'sm'; return; }
-  const libre = d - a;
-  sm.textContent = 'asignado ' + fmt(a) + ' · libre ' + fmt(libre);
-  sm.className = 'sm' + (libre < -TOL ? ' neg' : '');
-}
-
-function recalcular() {
-  const disp = {}, asig = {}, dTot = {}, aTot = {}, hs = {}, hT = {};
-  ROWS.forEach(r => {
-    if (r.blk) return;
-    const wk = keyOf(r);
-    HEADS.forEach(x => {
-      const k = r.ep + '|' + x.f, n = hd(wk, x.f);
-      hs[k] = (hs[k] || 0) + n; hT[x.f] = (hT[x.f] || 0) + n;
-    });
-    COLS.forEach(col => {
-      const c = col.k, k = r.ep + '|' + c;
-      const d = dispOf(wk, c), a = asigTot(wk, c);
-      if (d != null) { disp[k] = (disp[k] || 0) + d; dTot[c] = (dTot[c] || 0) + d; }
-      asig[k] = (asig[k] || 0) + a; aTot[c] = (aTot[c] || 0) + a;
-    });
+  $('tbCarga').querySelectorAll('[data-calc]').forEach(td => {
+    const d = td.dataset.calc === 'ancho' ? dispAncho(td.dataset.wk) : dispRlh(td.dataset.wk);
+    td.textContent = d ? fmt(d) : '—';
   });
-  const P = $('pie');
-  P.querySelectorAll('[data-hsub]').forEach(td => pintarTotal(td, hs[td.dataset.hsub] || 0, 0));
-  P.querySelectorAll('[data-htot]').forEach(td => pintarTotal(td, hT[td.dataset.htot] || 0, 0));
-  P.querySelectorAll('[data-sub]').forEach(td => pintarTotal(td, disp[td.dataset.sub] || 0, asig[td.dataset.sub] || 0));
-  P.querySelectorAll('[data-tot]').forEach(td => pintarTotal(td, dTot[td.dataset.tot] || 0, aTot[td.dataset.tot] || 0));
-}
-
-function pintarParams() {
   document.querySelectorAll('[data-p]').forEach(inp => {
     if (document.activeElement !== inp) inp.value = fmtP(pv(inp.dataset.p));
   });
@@ -565,20 +594,24 @@ document.querySelector('.parg').addEventListener('change', ev => {
   if (!inp.dataset || !inp.dataset.p) return;
   const k = inp.dataset.p, n = parseNum(inp.value);
   const r = ref(db, 'semanas/parametros/' + k);
-  const invalido = n == null || ((k === 'rl' || k === 'ba' || k === 'f' || k === 'm') && n <= 0);
+  const invalido = n == null || n <= 0;
   (invalido ? remove(r) : set(r, n)).catch(guardarError);
   inp.value = fmtP(invalido ? DEF[k] : n);
 });
 
-function refrescar() {
-  calcSaldo();
-  $('cuerpo').querySelectorAll('td.in').forEach(pintarCelda);
-  recalcular();
-  pintarParams();
-  if (cur) dibujarDetalle();
+/* ---------- pestañas ---------- */
+let vista = 'disp';
+function mostrar(v) {
+  vista = v;
+  ['disp', 'res', 'carga'].forEach(k => { $('v-' + k).hidden = k !== v; });
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.v === v ? 'true' : 'false'));
 }
+document.querySelector('.tabs').addEventListener('click', ev => {
+  const t = ev.target.closest('.tab');
+  if (t) mostrar(t.dataset.v);
+});
 
-/* ---------- detalle de clientes ---------- */
+/* ---------- reservar ---------- */
 let cur = null;
 function abrirDetalle(wk, c) {
   cur = { wk, c };
@@ -592,33 +625,17 @@ function cerrarDetalle() { cur = null; $('dlg').hidden = true; $('dMsg').hidden 
 
 function dibujarDetalle() {
   const { wk, c } = cur;
-  const row = ROWS.find(r => keyOf(r) === wk);
-  const cfg = CFG[c];
-  const lista = asigList(wk, c);
-  const a = lista.reduce((s, x) => s + (Number(x.kg) || 0), 0);
-  let resumen, libre, aviso;
-  const cls = v => v < -TOL ? 'neg' : 'pos';
-  if (cfg.type === 'bucket') {
-    const d = dispRlh(wk), ar = asigTot(wk, 'rlh');
-    libre = d - ar;
-    resumen = '<span>Asignado a ' + esc(cfg.label) + ' <b>' + fmt(a) + '</b></span>' +
-      '<span>Disponible R&amp;L Hilton <b>' + fmt(d) + '</b></span>' +
-      '<span>Asignado M2000 + Fritz <b>' + fmt(ar) + '</b></span>' +
-      '<span>Libre <b class="' + cls(libre) + '">' + fmt(libre) + '</b></span>';
-    aviso = 'M2000 y Fritz suman más que el disponible de R&L Hilton por ' + fmt(-libre) + ' tn.';
-  } else {
-    const d = dispOf(wk, c);
-    libre = d - a;
-    resumen = '<span>Disponible <b>' + fmt(d) + '</b></span><span>Asignado <b>' + fmt(a) + '</b></span>' +
-      '<span>Libre <b class="' + cls(libre) + '">' + fmt(libre) + '</b></span>';
-    aviso = 'La asignación supera lo disponible por ' + fmt(-libre) + ' tn.';
-  }
-  $('dTitle').textContent = row.f + ' · ' + cfg.label;
-  $('dSub').textContent = row.ep + ' · faena ' + row.fe + ' · embarque ' + row.e;
-  $('dSum').innerHTML = resumen;
-
+  const w = WEEKS.find(r => r.f === wk), p = PR[c];
+  const d = dispOf(wk, c), lista = asigList(wk, c);
+  const a = lista.reduce((s, x) => s + (Number(x.kg) || 0), 0), libre = d - a;
+  $('dTitle').textContent = w.f + ' · ' + p.label;
+  $('dSub').textContent = w.ep + ' · faena ' + w.fe + ' · embarque ' + w.e;
+  $('dSum').innerHTML =
+    '<div><span>Disponible</span><b>' + fmt(d) + '</b></div>' +
+    '<div><span>Reservado</span><b>' + fmt(a) + '</b></div>' +
+    '<div><span>Libre</span><b class="' + (libre < -TOL ? 'neg' : 'pos') + '">' + fmt(libre) + '</b></div>';
   if (!lista.length) {
-    $('dList').innerHTML = '<div class="dempty">Todavía no hay clientes asignados. Cargá el primero abajo.</div>';
+    $('dList').innerHTML = '<div class="dempty" style="padding-left:0">Todavía no hay reservas para esta celda.</div>';
   } else {
     lista.sort((x, y) => (x.ts || 0) - (y.ts || 0));
     $('dList').innerHTML = '<table><thead><tr><th>Cliente</th><th>Comercial</th><th class="r">Tn</th><th></th></tr></thead><tbody>' +
@@ -627,18 +644,22 @@ function dibujarDetalle() {
         '<td><button class="del" type="button" data-del="' + esc(x.id) + '" aria-label="Quitar a ' + esc(x.cliente) + '">✕</button></td></tr>').join('') +
       '</tbody></table>';
   }
+  const t = $('dTodo');
+  t.hidden = libre <= TOL;
+  t.textContent = 'Usar todo lo libre (' + fmt(Math.max(libre, 0)) + ' tn)';
+  t.dataset.v = String(Math.max(libre, 0));
   const m = $('dMsg');
-  if (libre < -TOL) { m.textContent = aviso; m.hidden = false; }
+  if (libre < -TOL) { m.textContent = 'Las reservas superan el volumen disponible por ' + fmt(-libre) + ' tn.'; m.hidden = false; }
   else m.hidden = true;
 
-  const cli = new Set(), com = new Set();
-  Object.values(cells).forEach(w => Object.values(w || {}).forEach(x => Object.values((x && x.asig) || {}).forEach(y => {
+  const cli = new Set(['M2000', 'Fritz']), com = new Set();
+  Object.values(cells).forEach(sem => Object.values(sem || {}).forEach(x => Object.values((x && x.asig) || {}).forEach(y => {
     if (y.cliente) cli.add(y.cliente); if (y.comercial) com.add(y.comercial);
   })));
   $('listCli').innerHTML = Array.from(cli).sort().map(v => '<option value="' + esc(v) + '">').join('');
   $('listCom').innerHTML = Array.from(com).sort().map(v => '<option value="' + esc(v) + '">').join('');
 }
-
+$('dTodo').onclick = () => { const v = Number($('dTodo').dataset.v) || 0; $('dKg').value = v ? String(Math.round(v * 100) / 100).replace('.', ',') : ''; $('dKg').focus(); };
 $('dList').addEventListener('change', ev => {
   const inp = ev.target;
   if (!cur || !inp.dataset || !inp.dataset.id) return;
@@ -656,7 +677,7 @@ function agregar() {
   const cliente = $('dCli').value.trim(), comercial = $('dCom').value.trim(), kg = parseTn($('dKg').value);
   const m = $('dMsg');
   if (!cliente || !kg) {
-    m.textContent = 'Completá el cliente y las toneladas para agregar.'; m.hidden = false;
+    m.textContent = 'Completá el cliente y las toneladas para guardar la reserva.'; m.hidden = false;
     (cliente ? $('dKg') : $('dCli')).focus();
     return;
   }
@@ -673,6 +694,15 @@ $('dCom').onkeydown = ev => { if (ev.key === 'Enter') $('dKg').focus(); };
 $('dClose').onclick = cerrarDetalle;
 $('dlg').addEventListener('click', ev => { if (ev.target === $('dlg')) cerrarDetalle(); });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && cur) cerrarDetalle(); });
+
+/* ---------- refresco general ---------- */
+function refrescar() {
+  pintarCards();
+  pintarTabla();
+  pintarReservas();
+  pintarCarga();
+  if (cur) dibujarDetalle();
+}
 
 /* ---------- ingreso ---------- */
 try { $('lgMail').value = localStorage.getItem('sem_email') || ''; } catch (e) {}
@@ -699,7 +729,8 @@ onAuthStateChanged(auth, user => {
   }
   $('login').hidden = true; $('app').hidden = false; $('who').hidden = false;
   $('whoMail').textContent = user.email || '';
-  construirTabla();
+  construirCarga();
+  mostrar(vista);
   setEstado('Conectando…', false);
   desuscribir = onValue(ref(db, 'semanas'),
     snap => {
