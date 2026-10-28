@@ -67,20 +67,41 @@
   .tab:hover { color: var(--text); }
   .tab[aria-selected="true"] { color: var(--blue); border-bottom-color: var(--blue); }
 
-  /* resumen por época */
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-bottom: 22px; }
-  .ecard { border: 1px solid var(--line); border-top: 4px solid var(--c, var(--blue)); border-radius: 10px; padding: 12px 14px 8px; }
+  /* resumen */
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+  .kp { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+  .kp span { display: block; font-size: 13px; color: var(--muted); }
+  .kp b { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .kp b small { font-size: 14px; font-weight: 600; color: var(--muted); }
+  .kp b.tom { color: var(--blue); }
+  .kp b.lib { color: var(--green); }
+  .kpbar { grid-column: 1 / -1; border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px 14px; }
+  .kpbar h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .leyenda { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 11px; font-size: 13px; }
+  .leyenda .cc { font-size: 13px; }
+  .cc { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+  .cc i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); flex: none; }
+  .cc.lb i { background: repeating-linear-gradient(135deg, #8fd5ad, #8fd5ad 3px, #e8f7ee 3px, #e8f7ee 6px); }
+  .seg { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: #eef1f5; margin-top: 7px; }
+  .seg.gr { height: 18px; border-radius: 9px; margin-top: 0; }
+  .seg .s { display: block; height: 100%; min-width: 3px; }
+  .seg .libre { background: repeating-linear-gradient(135deg, #cbeed9, #cbeed9 5px, #e8f7ee 5px, #e8f7ee 10px); }
+  .seg.over { box-shadow: 0 0 0 1.5px var(--red); }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; vertical-align: 0; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .ecard { border: 1px solid var(--line); border-top: 4px solid var(--c, var(--blue)); border-radius: 10px; padding: 12px 14px 6px; }
   .ecard h3 { margin: 0; font-size: 15px; }
   .ecard .fe { font-size: 12px; color: var(--muted); margin: 1px 0 6px; min-height: 17px; }
-  .prow { display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; padding: 7px 0; border-top: 1px solid #f0f2f5; font-size: 13px; align-items: baseline; }
-  .prow .nm { font-weight: 600; }
-  .prow .lb { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
-  .prow .lb.over { color: var(--red); }
-  .prow .lb.none { color: #b0b7c3; font-weight: 400; }
-  .prow .dt { grid-column: 1 / -1; font-size: 11.5px; font-weight: 400; color: var(--muted); }
-  .bar { grid-column: 1 / -1; height: 5px; background: #eef1f5; border-radius: 3px; overflow: hidden; margin-top: 2px; }
-  .bar i { display: block; height: 100%; background: var(--c, var(--blue)); }
-  .bar.over i { background: var(--red); }
+  .prow { padding: 9px 0 10px; border-top: 1px solid #f0f2f5; }
+  .prow .nm { font-weight: 600; font-size: 13.5px; }
+  .prow .sinv { font-size: 12px; color: #b0b7c3; margin-left: 8px; }
+  .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 3px; }
+  .trio span { display: block; font-size: 11px; color: var(--muted); }
+  .trio b { font-size: 15px; font-variant-numeric: tabular-nums; }
+  .trio b.tom { color: var(--blue); }
+  .trio b.lib { color: var(--green); }
+  .trio b.neg { color: var(--red); }
 
   /* tabla de disponibilidad */
   h2.sec { font-size: 16px; margin: 0 0 8px; }
@@ -97,15 +118,21 @@
   .main td.wk .fe { font-size: 12px; color: var(--muted); }
   .main td.emb { color: var(--muted); font-size: 13px; white-space: nowrap; }
   .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; color: var(--c); background: #eef2ff; background: color-mix(in srgb, var(--c) 12%, white); white-space: nowrap; }
-  .main td.pc { min-width: 150px; }
-  .pbtn { display: block; width: 100%; text-align: left; border: 1px solid transparent; border-radius: 8px; background: #fff; padding: 6px 9px 7px; }
+  .main td.pc { min-width: 184px; }
+  .pbtn { display: block; width: 100%; text-align: left; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 8px 10px 9px; }
   .pbtn:hover { border-color: var(--blue); background: var(--blue-soft); }
-  .pbtn .big { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--green); line-height: 1.2; }
-  .pbtn .det { font-size: 11.5px; color: var(--muted); }
-  .pbtn .bar { margin-top: 5px; }
-  .pbtn.full .big { color: var(--muted); font-size: 15px; }
-  .pbtn.over .big { color: var(--red); }
-  .pbtn.over .det { color: var(--red); }
+  .led { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+  .led b { font-size: 14px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .led b.tom { color: var(--blue); }
+  .led.lib { margin-top: 2px; border-top: 1px dashed var(--line); padding-top: 3px; }
+  .led.lib span { font-weight: 600; color: var(--text); }
+  .led.lib b { font-size: 20px; color: var(--green); }
+  .pbtn.full .led.lib b { color: var(--muted); }
+  .pbtn.over { border-color: #f1b5b5; background: #fffafa; }
+  .pbtn.over .led.lib b, .pbtn.over .led.lib span { color: var(--red); }
+  .chs { display: flex; flex-wrap: wrap; gap: 3px 10px; margin-top: 7px; }
+  .chs .cc b { font-variant-numeric: tabular-nums; }
+  .chs.sin { font-size: 11.5px; color: var(--muted); }
   .none { color: #b0b7c3; padding-left: 9px; }
   .hint { margin-top: 10px; font-size: 13px; color: var(--muted); }
 
@@ -157,6 +184,7 @@
   .dsum b { font-size: 19px; font-variant-numeric: tabular-nums; }
   .dsum b.pos { color: var(--green); }
   .dsum b.neg { color: var(--red); }
+  .dseg { padding: 0 18px 12px; }
   .dl { padding: 0 18px; max-height: 32vh; overflow-y: auto; }
   .dl table { font-size: 14px; }
   .dl th, .dl td { border-bottom: 1px solid #eef0f3; padding: 7px 6px; text-align: left; font-weight: 400; }
@@ -202,6 +230,7 @@
 
     <!-- DISPONIBILIDAD -->
     <div id="v-disp">
+      <div class="kpis" id="kpis"></div>
       <div class="cards" id="cards"></div>
       <h2 class="sec">Por semana de faena</h2>
       <div class="scroll">
@@ -215,7 +244,7 @@
           <tbody id="tbDisp"></tbody>
         </table>
       </div>
-      <div class="hint">El número grande es el volumen libre. Verde: queda volumen. Gris: todo reservado. Rojo: reservaste de más.</div>
+      <div class="hint">Disponible: volumen de la semana. Tomado: reservado para clientes (cada color es un cliente). Libre: todavía sin cliente. Si te pasás del disponible, la celda se marca en rojo.</div>
     </div>
 
     <!-- RESERVAS -->
@@ -279,6 +308,7 @@
       <button class="dx" id="dClose" type="button" aria-label="Cerrar">✕</button>
     </div>
     <div class="dsum" id="dSum"></div>
+    <div class="dseg" id="dSeg"></div>
     <div class="dl" id="dList"></div>
     <div class="dtodo"><button class="link" id="dTodo" type="button"></button></div>
     <div class="df">
@@ -418,6 +448,37 @@ const dispRlh   = wk => (hd(wk, 'nvCK') + hd(wk, 'nvSK')) * pv('rl') * pv('m') /
 const dispOf = (wk, c) => c === 'ancho' ? dispAncho(wk) : c === 'rlh' ? dispRlh(wk) : kgOf(wk, c);
 
 /* ---------- disponibilidad ---------- */
+const PAL = ['#2563eb', '#d97706', '#0f8f7e', '#c026d3', '#dc2626', '#65a30d', '#0891b2', '#7c3aed', '#db2777', '#4d7c0f', '#b45309', '#475467'];
+function colorCli(n) {
+  n = String(n || '').trim().toLowerCase();
+  let h = 0;
+  for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
+  return PAL[h % PAL.length];
+}
+function porCliente(lista) {
+  const m = {};
+  lista.forEach(x => {
+    const nom = String(x.cliente || '').trim() || 'Sin cliente', k = nom.toLowerCase();
+    if (!m[k]) m[k] = { nombre: nom, kg: 0 };
+    m[k].kg += Number(x.kg) || 0;
+  });
+  return Object.keys(m).map(k => m[k]).sort((a, b) => b.kg - a.kg);
+}
+function segBar(d, grupos, extra) {
+  const a = grupos.reduce((s, g) => s + g.kg, 0);
+  const total = Math.max(d, a) || 1;
+  let h = grupos.map(g => '<i class="s" style="width:' + (g.kg / total * 100).toFixed(2) + '%;background:' + colorCli(g.nombre) + '" title="' + esc(g.nombre) + ' ' + fmt(g.kg) + ' tn"></i>').join('');
+  if (d > a + TOL) h += '<i class="s libre" style="width:' + ((d - a) / total * 100).toFixed(2) + '%" title="Libre ' + fmt(d - a) + ' tn"></i>';
+  return '<div class="seg' + (a > d + TOL ? ' over' : '') + (extra ? ' ' + extra : '') + '">' + h + '</div>';
+}
+function reservasDe(ep, prodk) {
+  const out = [];
+  WEEKS.forEach(w => {
+    if (ep && w.ep !== ep) return;
+    PRODS.forEach(p => { if (prodk && p.k !== prodk) return; asigList(w.f, p.k).forEach(x => out.push(x)); });
+  });
+  return out;
+}
 function sumas(filtro) {
   const s = {};
   PRODS.forEach(p => { s[p.k] = { d: 0, a: 0 }; });
@@ -427,36 +488,52 @@ function sumas(filtro) {
   });
   return s;
 }
-function filaProducto(nombre, d, a) {
-  if (!d && !a) return '<div class="prow"><span class="nm">' + esc(nombre) + '</span><span class="lb none">—</span></div>';
-  const libre = d - a, over = libre < -TOL;
-  const pct = d > 0 ? Math.min(100, a / d * 100) : 100;
-  return '<div class="prow"><span class="nm">' + esc(nombre) + '</span>' +
-    '<span class="lb' + (over ? ' over' : '') + '">' + (over ? '−' + fmt(-libre) : fmt(libre)) + ' tn libre</span>' +
-    '<span class="dt">' + (a ? 'reservado ' + fmt(a) + ' de ' : 'disponible ') + fmt(d) + '</span>' +
-    '<span class="bar' + (over ? ' over' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></span></div>';
+function trio(d, a) {
+  const libre = d - a, neg = libre < -TOL;
+  return '<div class="trio"><div><span>Disponible</span><b>' + fmt(d) + '</b></div>' +
+    '<div><span>Tomado</span><b class="tom">' + fmt(a) + '</b></div>' +
+    '<div><span>' + (neg ? 'Excedido' : 'Libre') + '</span><b class="' + (neg ? 'neg' : 'lib') + '">' + fmt(neg ? -libre : Math.max(libre, 0)) + '</b></div></div>';
 }
-function pintarCards() {
-  const tarjeta = (titulo, sub, color, s) =>
+function filaProducto(nombre, d, a, ep, k) {
+  if (!d && !a) return '<div class="prow"><span class="nm">' + esc(nombre) + '</span><span class="sinv">sin volumen</span></div>';
+  return '<div class="prow"><span class="nm">' + esc(nombre) + '</span>' + trio(d, a) + segBar(d, porCliente(reservasDe(ep, k))) + '</div>';
+}
+function pintarResumen() {
+  const s = sumas(null);
+  let d = 0, a = 0;
+  PRODS.forEach(p => { d += s[p.k].d; a += s[p.k].a; });
+  const grupos = porCliente(reservasDe(null, null));
+  const libre = d - a;
+  $('kpis').innerHTML =
+    '<div class="kp"><span>Volumen disponible</span><b>' + fmt(d) + ' <small>tn</small></b></div>' +
+    '<div class="kp"><span>Tomado por clientes</span><b class="tom">' + fmt(a) + ' <small>tn</small></b></div>' +
+    '<div class="kp"><span>' + (libre < -TOL ? 'Excedido' : 'Todavía sin cliente') + '</span><b class="lib" style="' + (libre < -TOL ? 'color:var(--red)' : '') + '">' + fmt(Math.abs(libre)) + ' <small>tn</small></b></div>' +
+    '<div class="kpbar"><h3>Reparto del volumen disponible, todas las semanas y productos</h3>' + segBar(d, grupos, 'gr') +
+    '<div class="leyenda">' + grupos.map(g => '<span class="cc" style="--c:' + colorCli(g.nombre) + '"><i></i>' + esc(g.nombre) + ' <b>' + fmt(g.kg) + ' tn</b></span>').join('') +
+    '<span class="cc lb"><i></i>Libre <b>' + fmt(Math.max(libre, 0)) + ' tn</b></span></div></div>';
+
+  const tarjeta = (titulo, sub, color, ss, ep) =>
     '<div class="ecard" style="--c:' + color + '"><h3>' + esc(titulo) + '</h3><div class="fe">' + esc(sub) + '</div>' +
-    PRODS.map(p => filaProducto(p.label, s[p.k].d, s[p.k].a)).join('') + '</div>';
-  let h = EPOCAS.map(ep => tarjeta(ep, 'Faena ' + rangos(ep), EPCOL[ep], sumas(ep))).join('');
-  h += tarjeta('Total', 'Todas las épocas', '#475467', sumas(null));
-  $('cards').innerHTML = h;
+    PRODS.map(p => filaProducto(p.label, ss[p.k].d, ss[p.k].a, ep, p.k)).join('') + '</div>';
+  $('cards').innerHTML = EPOCAS.map(ep => tarjeta(ep, 'Faena ' + rangos(ep), EPCOL[ep], sumas(ep), ep)).join('') +
+    tarjeta('Total', 'Todas las épocas', '#475467', s, null);
 }
 function celdaHTML(wk, c, label) {
-  const d = dispOf(wk, c), a = asigOf(wk, c);
+  const d = dispOf(wk, c), lista = asigList(wk, c);
+  const a = lista.reduce((s, x) => s + (Number(x.kg) || 0), 0);
   if (!d && !a) return '<td class="pc"><span class="none">—</span></td>';
   const libre = d - a;
   const cls = libre < -TOL ? 'over' : Math.abs(libre) <= TOL ? 'full' : 'ok';
-  const pct = d > 0 ? Math.min(100, a / d * 100) : 100;
-  const big = cls === 'full' ? 'Completo' : cls === 'over' ? '−' + fmt(-libre) : fmt(libre);
-  const det = cls === 'over' ? 'excedido · reservado ' + fmt(a) + ' de ' + fmt(d)
-    : cls === 'full' ? 'reservado ' + fmt(a) + ' de ' + fmt(d)
-    : a ? 'libre · reservado ' + fmt(a) + ' de ' + fmt(d) : 'libre de ' + fmt(d);
+  const grupos = porCliente(lista);
+  const chips = grupos.map(g => '<span class="cc" style="--c:' + colorCli(g.nombre) + '"><i></i>' + esc(g.nombre) + ' <b>' + fmt(g.kg) + '</b></span>').join('');
+  const etiqueta = cls === 'over' ? 'Excedido' : cls === 'full' ? 'Todo tomado' : 'Libre';
+  const valor = cls === 'over' ? fmt(-libre) : cls === 'full' ? '0' : fmt(libre);
   return '<td class="pc"><button class="pbtn ' + cls + '" type="button" data-wk="' + wk + '" data-c="' + c + '" aria-label="Reservar ' + esc(label) + ' ' + wk + '">' +
-    '<div class="big">' + big + '</div><div class="det">' + esc(det) + '</div>' +
-    '<div class="bar' + (cls === 'over' ? ' over' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></div></button></td>';
+    '<div class="led"><span>Disponible</span><b>' + fmt(d) + '</b></div>' +
+    '<div class="led"><span>Tomado</span><b class="tom">' + fmt(a) + '</b></div>' +
+    '<div class="led lib"><span>' + etiqueta + '</span><b>' + valor + '</b></div>' +
+    segBar(d, grupos) +
+    (chips ? '<div class="chs">' + chips + '</div>' : '<div class="chs sin">Sin cliente todavía</div>') + '</button></td>';
 }
 function pintarTabla() {
   let h = '';
@@ -498,7 +575,7 @@ function pintarReservas() {
   const porCli = {};
   lista.forEach(r => { const k = r.a.cliente || 'Sin cliente'; porCli[k] = (porCli[k] || 0) + (Number(r.a.kg) || 0); });
   $('chips').innerHTML = Object.keys(porCli).sort((a, b) => porCli[b] - porCli[a])
-    .map(k => '<span class="chip">' + esc(k) + ' <b>' + fmt(porCli[k]) + ' tn</b></span>').join('');
+    .map(k => '<span class="chip"><i class="dot" style="background:' + colorCli(k) + '"></i>' + esc(k) + ' <b>' + fmt(porCli[k]) + ' tn</b></span>').join('');
 
   if (!lista.length) {
     $('tbRes').innerHTML = '<tr><td colspan="7" class="vacio">' + (todas.length ? 'Ninguna reserva coincide con el filtro.' : 'Todavía no hay reservas. Tocá una celda en Disponibilidad para guardar la primera.') + '</td></tr>';
@@ -506,7 +583,7 @@ function pintarReservas() {
     return;
   }
   $('tbRes').innerHTML = lista.map(r =>
-    '<tr><td>' + esc(r.a.comercial || '—') + '</td><td>' + esc(r.a.cliente) + '</td>' +
+    '<tr><td>' + esc(r.a.comercial || '—') + '</td><td><i class="dot" style="background:' + colorCli(r.a.cliente) + '"></i>' + esc(r.a.cliente) + '</td>' +
     '<td><button class="link" type="button" data-wk="' + r.w.f + '" data-c="' + r.p.k + '">' + esc(r.w.f) + '</button> <span style="color:var(--muted);font-size:12px">' + esc(r.w.fe) + '</span></td>' +
     '<td><span class="pill" style="--c:' + EPCOL[r.w.ep] + '">' + esc(r.w.ep) + '</span></td><td>' + esc(r.p.label) + '</td>' +
     '<td class="r">' + fmt(Number(r.a.kg) || 0) + '</td>' +
@@ -632,14 +709,15 @@ function dibujarDetalle() {
   $('dSub').textContent = w.ep + ' · faena ' + w.fe + ' · embarque ' + w.e;
   $('dSum').innerHTML =
     '<div><span>Disponible</span><b>' + fmt(d) + '</b></div>' +
-    '<div><span>Reservado</span><b>' + fmt(a) + '</b></div>' +
+    '<div><span>Tomado</span><b>' + fmt(a) + '</b></div>' +
     '<div><span>Libre</span><b class="' + (libre < -TOL ? 'neg' : 'pos') + '">' + fmt(libre) + '</b></div>';
+  $('dSeg').innerHTML = segBar(d, porCliente(lista), 'gr');
   if (!lista.length) {
     $('dList').innerHTML = '<div class="dempty" style="padding-left:0">Todavía no hay reservas para esta celda.</div>';
   } else {
     lista.sort((x, y) => (x.ts || 0) - (y.ts || 0));
     $('dList').innerHTML = '<table><thead><tr><th>Cliente</th><th>Comercial</th><th class="r">Tn</th><th></th></tr></thead><tbody>' +
-      lista.map(x => '<tr><td>' + esc(x.cliente) + '</td><td>' + esc(x.comercial) + '</td>' +
+      lista.map(x => '<tr><td><i class="dot" style="background:' + colorCli(x.cliente) + '"></i>' + esc(x.cliente) + '</td><td>' + esc(x.comercial) + '</td>' +
         '<td class="r"><input type="text" inputmode="decimal" value="' + esc(fmt(Number(x.kg) || 0)) + '" data-id="' + esc(x.id) + '" aria-label="Tn de ' + esc(x.cliente) + '"></td>' +
         '<td><button class="del" type="button" data-del="' + esc(x.id) + '" aria-label="Quitar a ' + esc(x.cliente) + '">✕</button></td></tr>').join('') +
       '</tbody></table>';
@@ -697,7 +775,7 @@ document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && cur) cer
 
 /* ---------- refresco general ---------- */
 function refrescar() {
-  pintarCards();
+  pintarResumen();
   pintarTabla();
   pintarReservas();
   pintarCarga();
