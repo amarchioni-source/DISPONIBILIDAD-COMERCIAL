@@ -159,6 +159,11 @@
   .carga input { width: 100%; min-width: 92px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font: inherit; text-align: right; color: var(--text); background: #fff; }
   .carga input:focus { border-color: var(--blue); }
 
+  .carga th.g { text-align: center; border-bottom: 1px solid var(--line); }
+  .carga th.sep, .carga td.sep { border-left: 2px solid var(--line); }
+  .carga td.num { text-align: right; font-variant-numeric: tabular-nums; padding: 7px 12px; }
+  .carga tfoot td { font-weight: 700; background: var(--soft); border-bottom: 0; }
+  textarea.imp { width: 100%; min-height: 96px; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font: 13px/1.4 ui-monospace, Consolas, monospace; color: var(--text); margin-top: 8px; }
   .note { margin-top: 14px; font-size: 13px; color: var(--muted); }
   .note.bad { color: var(--red); }
 
@@ -216,6 +221,7 @@
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" data-v="disp" type="button">Disponibilidad</button>
       <button class="tab" role="tab" data-v="res" type="button">Reservas</button>
+      <button class="tab" role="tab" data-v="faena" type="button">Faena y cortes</button>
       <button class="tab" role="tab" data-v="carga" type="button">Carga de volumen</button>
     </div>
 
@@ -255,28 +261,82 @@
       </div>
     </div>
 
+    <!-- FAENA Y CORTES -->
+    <div id="v-faena" hidden>
+      <details class="par" id="imp">
+        <summary>Cargar semanas desde el Excel</summary>
+        <p class="parn" style="margin-top:8px">
+          En la hoja <b>1 - Detalle de Faena</b>, seleccioná las filas de las semanas (W 44, W 45, …) <b>desde la columna L hasta la W</b>, copiá y pegá acá. Se cargan las cabezas de esas semanas y se reemplazan las que ya estaban.
+        </p>
+        <textarea class="imp" id="impTxt" placeholder="W 44&#9;0&#9;1000&#9;&#9;1450&#9;0&#9;0&#9;&#9;&#9;0&#9;&#9;2450"></textarea>
+        <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn pri" id="impGo" type="button">Cargar semanas</button>
+          <span class="parn" id="impMsg" style="margin:0"></span>
+        </div>
+      </details>
+
+      <h2 class="sec">Cabezas por semana</h2>
+      <div class="scroll">
+        <table class="carga" style="min-width:1080px">
+          <thead>
+            <tr>
+              <th rowspan="2">Faena</th><th rowspan="2">Fechas</th>
+              <th class="g" colspan="5">H / NH</th>
+              <th class="g sep" colspan="3">481</th>
+              <th class="sep" rowspan="2">Total</th>
+            </tr>
+            <tr>
+              <th>VA TP</th><th>VA UE</th><th>NV C/Kosher USA</th><th>NV S/Kosher</th><th>NV C/Kosher</th>
+              <th class="sep">S/Kosher</th><th>Kosher USA</th><th>C/Kosher</th>
+            </tr>
+          </thead>
+          <tbody id="tbCab"></tbody>
+        </table>
+      </div>
+      <div class="hint">NV S/Kosher y NV C/Kosher alimentan el disponible de B. Ancho y R&amp;L Hilton. S/Kosher y C/Kosher de 481 alimentan los cortes de 481. Las demás columnas son informativas y suman al total.</div>
+
+      <h2 class="sec" style="margin-top:24px">Cómo se abre en cortes</h2>
+      <div class="scroll">
+        <table class="carga" style="min-width:1380px">
+          <thead>
+            <tr>
+              <th rowspan="2">Faena</th><th rowspan="2">Fechas</th>
+              <th class="g sep" colspan="6">481 no kosher (incluye rechazo)</th>
+              <th class="g sep" colspan="3">481 kosher</th>
+              <th class="g sep" colspan="2">Otros 481</th>
+              <th class="g sep" colspan="2">Hilton</th>
+            </tr>
+            <tr>
+              <th class="sep">Cabezas</th><th>Pecho</th><th>R&amp;L</th><th>B. Ancho</th><th>Rueda</th><th>14 Ctes</th>
+              <th class="sep">Cabezas</th><th>R&amp;L</th><th>Rueda</th>
+              <th class="sep">Garr/Tort/Braz</th><th>Cogote</th>
+              <th class="sep">R&amp;L</th><th>B. Ancho</th>
+            </tr>
+          </thead>
+          <tbody id="tbCortes"></tbody>
+          <tfoot id="tfCortes"></tfoot>
+        </table>
+      </div>
+      <div class="hint">Cortes en toneladas (cabezas en unidades). 14 Ctes es la suma de Pecho, R&amp;L, B. Ancho y Rueda del 481 no kosher. Las cabezas c/Kosher de 481 se reparten entre kosher y no kosher según el rechazo.</div>
+
+      <details class="par" style="margin-top:18px">
+        <summary>Rendimientos por media res (kg)</summary>
+        <div class="parg" id="parg" style="margin-top:10px"></div>
+        <p class="parn">
+          Son los factores de la planilla PROY 481 y NH para las semanas 44 a 04. Valen para todas las semanas.<br>
+          Disponible B. Ancho Hilton = (NV C/Kosher × parte + NV S/Kosher) × kg × medias ÷ 1000. Disponible R&amp;L Hilton = (NV C/Kosher + NV S/Kosher) × kg × medias ÷ 1000.<br>
+          Rechazo = S/Kosher + rechazo × C/Kosher. Apto kosher = C/Kosher − lo rechazado. Cada corte = cabezas × kg × medias ÷ 1000.
+        </p>
+      </details>
+    </div>
+
     <!-- CARGA -->
     <div id="v-carga" hidden>
-      <div class="par">
-        <h3>Factores de cálculo</h3>
-        <div class="parg">
-          <label>Kg de R&amp;L Hilton por media res<input data-p="rl" inputmode="decimal" autocomplete="off"></label>
-          <label>Kg de B. Ancho Hilton por media res<input data-p="ba" inputmode="decimal" autocomplete="off"></label>
-          <label>Parte de B. Ancho que cuenta en NV c/Kosher<input data-p="f" inputmode="decimal" autocomplete="off"></label>
-          <label>Medias reses por cabeza<input data-p="m" inputmode="decimal" autocomplete="off"></label>
-        </div>
-        <p class="parn">
-          Disponible B. Ancho Hilton = (cabezas NV c/Kosher × parte + cabezas NV s/Kosher) × kg de B. Ancho × medias ÷ 1000.<br>
-          Disponible R&amp;L Hilton = (cabezas NV c/Kosher + cabezas NV s/Kosher) × kg de R&amp;L × medias ÷ 1000.<br>
-          Son las fórmulas de la planilla PROY 481 y NH, y los factores valen para todas las semanas.
-        </p>
-      </div>
       <div class="scroll">
         <table class="carga">
           <thead>
             <tr>
               <th>Faena</th><th>Fechas</th>
-              <th>Cabezas NV c/Kosher</th><th>Cabezas NV s/Kosher</th>
               <th>B. Ancho Hilton (calculado)</th><th>R&amp;L Hilton (calculado)</th>
               <th>Menaker</th><th>R&amp;L 481</th><th>Sets 481</th>
             </tr>
@@ -284,7 +344,7 @@
           <tbody id="tbCarga"></tbody>
         </table>
       </div>
-      <div class="hint">Cargá las cabezas de cada semana y el volumen de Menaker, R&amp;L 481 y Sets 481. Los casilleros de Stk Caj y Stk Q son informativos y no entran en los totales.</div>
+      <div class="hint">B. Ancho y R&amp;L Hilton se calculan con las cabezas de la pestaña Faena y cortes. Menaker, R&amp;L 481 y Sets 481 se cargan a mano, en toneladas. Los casilleros de Stk Caj y Stk Q son informativos y no entran en los totales.</div>
     </div>
 
     <div class="note" id="estado"></div>
@@ -351,9 +411,16 @@ const PRODS = [
   { k: 'sets481', label: 'Sets 481' }
 ];
 const PR = {}; PRODS.forEach(p => { PR[p.k] = p; });
-const HEADS = [
-  { f: 'nvCK', label: 'NV c/Kosher' },
-  { f: 'nvSK', label: 'NV s/Kosher' }
+/* cabezas de faena: columnas L a W del Programa de Faena (hoja 1 - Detalle de Faena) */
+const CAB = [
+  { f: 'vaTP',   label: 'VA TP' },
+  { f: 'vaUE',   label: 'VA UE' },
+  { f: 'nvCKU',  label: 'NV C/Kosher USA' },
+  { f: 'nvSK',   label: 'NV S/Kosher' },
+  { f: 'nvCK',   label: 'NV C/Kosher' },
+  { f: 'e481SK', label: '481 S/Kosher' },
+  { f: 'e481KU', label: '481 Kosher USA' },
+  { f: 'e481CK', label: '481 C/Kosher' }
 ];
 const EPOCAS = ['Aéreos', 'Marítimos', 'Full levy'];
 const EPCOL = { 'Aéreos': '#2563eb', 'Marítimos': '#0f8f7e', 'Full levy': '#7c3aed' };
@@ -375,7 +442,23 @@ const WEEKS = [
   { f: 'Sem04', e: 'Sem05', fe: '25/01 al 31/01', ep: 'Full levy' }
 ];
 /* factores de la planilla PROY 481 y NH (fila de Sem 44) */
-const DEF = { rl: 7.7, ba: 2.5, f: 0.35, m: 2 };
+const DEF = { rl: 7.7, ba: 2.5, f: 0.35, m: 2, rech: 0.4, pe: 11.5, rl4: 8, ba4: 2.5, ru: 17, rlk: 8, ruk: 17, gt: 10.5, gtk: 3.45, co: 3.5 };
+const FACT = [
+  { k: 'rl',   label: 'R&L Hilton: kg por media res' },
+  { k: 'ba',   label: 'B. Ancho Hilton: kg por media res' },
+  { k: 'f',    label: 'B. Ancho Hilton: parte que cuenta en NV c/Kosher' },
+  { k: 'm',    label: 'Medias reses por cabeza' },
+  { k: 'rech', label: 'Rechazo kosher: parte de las cabezas c/Kosher 481' },
+  { k: 'pe',   label: '481 no kosher: Pecho, kg por media res' },
+  { k: 'rl4',  label: '481 no kosher: R&L, kg por media res' },
+  { k: 'ba4',  label: '481 no kosher: B. Ancho, kg por media res' },
+  { k: 'ru',   label: '481 no kosher: Rueda, kg por media res' },
+  { k: 'rlk',  label: '481 kosher: R&L, kg por media res' },
+  { k: 'ruk',  label: '481 kosher: Rueda, kg por media res' },
+  { k: 'gt',   label: 'Garr/Tort/Braz no kosher, kg por media res' },
+  { k: 'gtk',  label: 'Garr/Tort/Braz kosher, kg por media res' },
+  { k: 'co',   label: 'Cogote no kosher, kg por media res' }
+];
 const TOL = 0.005;
 
 /* ---------- utilidades ---------- */
@@ -430,7 +513,7 @@ const asigList = (wk, c) => Object.entries(cell(wk, c).asig || {}).map(([id, a])
 const asigOf = (wk, c) => asigList(wk, c).reduce((a, x) => a + (Number(x.kg) || 0), 0);
 const rutaCelda = (wk, c) => 'semanas/celdas/' + wk + '/' + c;
 const hd = (wk, f) => Number((cab[wk] || {})[f]) || 0;
-const pv = k => (params[k] != null && params[k] !== '' && isFinite(Number(params[k])) && Number(params[k]) > 0) ? Number(params[k]) : DEF[k];
+const pv = k => (params[k] != null && params[k] !== '' && isFinite(Number(params[k])) && (k === 'rech' ? Number(params[k]) >= 0 : Number(params[k]) > 0)) ? Number(params[k]) : DEF[k];
 
 /* fórmulas de la planilla (toneladas) */
 const dispAncho = wk => (hd(wk, 'nvCK') * pv('f') + hd(wk, 'nvSK')) * pv('ba') * pv('m') / 1000;
@@ -590,85 +673,167 @@ $('tbRes').addEventListener('click', ev => {
   }
 });
 
-/* ---------- carga de volumen ---------- */
+/* ---------- utilidades de tablas con casilleros ---------- */
+function moverEnColumna(ev) {
+  const inp = ev.target;
+  if (inp.tagName !== 'INPUT') return;
+  let dir = 0;
+  if (ev.key === 'Enter') dir = ev.shiftKey ? -1 : 1;
+  else if (ev.key === 'ArrowDown') dir = 1;
+  else if (ev.key === 'ArrowUp') dir = -1;
+  if (!dir) return;
+  const td = inp.closest('td'), idx = td.cellIndex;
+  let tr = td.parentElement;
+  while (tr) {
+    tr = dir > 0 ? tr.nextElementSibling : tr.previousElementSibling;
+    const nx = tr && tr.cells[idx] && tr.cells[idx].querySelector('input');
+    if (nx) { ev.preventDefault(); nx.focus(); nx.select(); return; }
+  }
+}
+const inputTd = (wk, c, etiqueta) =>
+  '<td><input type="text" inputmode="decimal" autocomplete="off" data-wk="' + wk + '" data-c="' + c + '" aria-label="' + esc(etiqueta) + '"></td>';
+
+/* ---------- carga de volumen (Menaker, R&L 481, Sets 481) ---------- */
 let cargaLista = false;
 function construirCarga() {
   if (cargaLista) return;
   cargaLista = true;
+  const man = ['menaker', 'rl481', 'sets481'];
   let h = '';
   STK.forEach(s => {
-    h += '<tr class="stk"><td class="t">' + esc(s.f) + '</td><td></td><td></td><td></td><td></td><td></td>' +
-      ['menaker', 'rl481', 'sets481'].map(k => '<td><input type="text" inputmode="decimal" autocomplete="off" data-wk="' + s.key + '" data-c="' + k + '" aria-label="' + esc(s.f + ' ' + PR[k].label) + '"></td>').join('') + '</tr>';
+    h += '<tr class="stk"><td class="t">' + esc(s.f) + '</td><td></td><td></td><td></td>' +
+      man.map(k => inputTd(s.key, k, s.f + ' ' + PR[k].label)).join('') + '</tr>';
   });
   WEEKS.forEach(w => {
     h += '<tr><td class="t"><b>' + esc(w.f) + '</b></td><td class="t" style="color:var(--muted)">' + esc(w.fe) + '</td>' +
-      HEADS.map(x => '<td><input type="text" inputmode="numeric" autocomplete="off" data-wk="' + w.f + '" data-h="' + x.f + '" aria-label="' + esc(w.f + ' cabezas ' + x.label) + '"></td>').join('') +
       '<td class="calc" data-wk="' + w.f + '" data-calc="ancho"></td><td class="calc" data-wk="' + w.f + '" data-calc="rlh"></td>' +
-      ['menaker', 'rl481', 'sets481'].map(k => '<td><input type="text" inputmode="decimal" autocomplete="off" data-wk="' + w.f + '" data-c="' + k + '" aria-label="' + esc(w.f + ' ' + PR[k].label) + '"></td>').join('') + '</tr>';
+      man.map(k => inputTd(w.f, k, w.f + ' ' + PR[k].label)).join('') + '</tr>';
   });
   $('tbCarga').innerHTML = h;
-
   $('tbCarga').addEventListener('change', ev => {
     const inp = ev.target;
     if (inp.tagName !== 'INPUT') return;
-    if (inp.dataset.h) {
-      const n = parseHeads(inp.value);
-      const r = ref(db, 'semanas/cabezas/' + inp.dataset.wk + '/' + inp.dataset.h);
-      (n ? set(r, n) : remove(r)).catch(guardarError);
-      inp.value = n ? fmt(n) : '';
-    } else {
-      const n = parseTn(inp.value);
-      const r = ref(db, rutaCelda(inp.dataset.wk, inp.dataset.c) + '/kg');
-      (n ? set(r, n) : remove(r)).catch(guardarError);
-      inp.value = n ? fmt(n) : '';
-    }
+    const n = parseTn(inp.value);
+    const r = ref(db, rutaCelda(inp.dataset.wk, inp.dataset.c) + '/kg');
+    (n ? set(r, n) : remove(r)).catch(guardarError);
+    inp.value = n ? fmt(n) : '';
   });
-  $('tbCarga').addEventListener('keydown', ev => {
-    const inp = ev.target;
-    if (inp.tagName !== 'INPUT') return;
-    let dir = 0;
-    if (ev.key === 'Enter') dir = ev.shiftKey ? -1 : 1;
-    else if (ev.key === 'ArrowDown') dir = 1;
-    else if (ev.key === 'ArrowUp') dir = -1;
-    if (!dir) return;
-    const td = inp.closest('td'), idx = td.cellIndex;
-    let tr = td.parentElement;
-    while (tr) {
-      tr = dir > 0 ? tr.nextElementSibling : tr.previousElementSibling;
-      const nx = tr && tr.cells[idx] && tr.cells[idx].querySelector('input');
-      if (nx) { ev.preventDefault(); nx.focus(); nx.select(); return; }
-    }
-  });
+  $('tbCarga').addEventListener('keydown', moverEnColumna);
 }
 function pintarCarga() {
   $('tbCarga').querySelectorAll('input').forEach(inp => {
     if (document.activeElement === inp) return;
-    const n = inp.dataset.h ? hd(inp.dataset.wk, inp.dataset.h) : kgOf(inp.dataset.wk, inp.dataset.c);
+    const n = kgOf(inp.dataset.wk, inp.dataset.c);
     inp.value = n ? fmt(n) : '';
   });
   $('tbCarga').querySelectorAll('[data-calc]').forEach(td => {
     const d = td.dataset.calc === 'ancho' ? dispAncho(td.dataset.wk) : dispRlh(td.dataset.wk);
     td.textContent = d ? fmt(d) : '—';
   });
+}
+
+/* ---------- faena y cortes ---------- */
+/* Fórmulas de la hoja PROY 481 y NH (semanas 44 a 04). Todo en toneladas, menos las cabezas. */
+function explotar(wk) {
+  const E = hd(wk, 'e481SK'), F = hd(wk, 'e481CK'), m = pv('m');
+  const I = E + pv('rech') * F;          // 481 no kosher: S/Kosher + rechazo de los c/Kosher
+  const J = E + F - I;                   // 481 kosher apto
+  const t = (cab, kgMedia) => cab * kgMedia * m / 1000;
+  const pecho = t(I, pv('pe')), rl = t(I, pv('rl4')), ba = t(I, pv('ba4')), rueda = t(I, pv('ru'));
+  return {
+    I, J, pecho, rl, ba, rueda, ctes: pecho + rl + ba + rueda,
+    rlk: t(J, pv('rlk')), ruk: t(J, pv('ruk')),
+    gt: t(I, pv('gt')) + t(J, pv('gtk')), co: t(I, pv('co')),
+    rlh: dispRlh(wk), bah: dispAncho(wk)
+  };
+}
+const CORTES = ['I', 'pecho', 'rl', 'ba', 'rueda', 'ctes', 'J', 'rlk', 'ruk', 'gt', 'co', 'rlh', 'bah'];
+const CORTES_SEP = { I: 1, J: 1, gt: 1, rlh: 1 };
+
+let faenaLista = false;
+function construirFaena() {
+  if (faenaLista) return;
+  faenaLista = true;
+  $('tbCab').innerHTML = WEEKS.map(w =>
+    '<tr><td class="t"><b>' + esc(w.f) + '</b></td><td class="t" style="color:var(--muted)">' + esc(w.fe) + '</td>' +
+    CAB.map((x, i) => '<td' + (x.f === 'e481SK' ? ' class="sep"' : '') + '><input type="text" inputmode="numeric" autocomplete="off" data-wk="' + w.f + '" data-h="' + x.f + '" aria-label="' + esc(w.f + ' ' + x.label) + '"></td>').join('') +
+    '<td class="num sep" data-tot="' + w.f + '"></td></tr>').join('');
+  $('tbCab').addEventListener('change', ev => {
+    const inp = ev.target;
+    if (inp.tagName !== 'INPUT') return;
+    const n = parseHeads(inp.value);
+    const r = ref(db, 'semanas/cabezas/' + inp.dataset.wk + '/' + inp.dataset.h);
+    (n ? set(r, n) : remove(r)).catch(guardarError);
+    inp.value = n ? fmt(n) : '';
+  });
+  $('tbCab').addEventListener('keydown', moverEnColumna);
+
+  $('parg').innerHTML = FACT.map(x => '<label>' + esc(x.label) + '<input data-p="' + x.k + '" inputmode="decimal" autocomplete="off"></label>').join('');
+  $('parg').addEventListener('change', ev => {
+    const inp = ev.target;
+    if (!inp.dataset || !inp.dataset.p) return;
+    const k = inp.dataset.p, n = parseNum(inp.value);
+    const r = ref(db, 'semanas/parametros/' + k);
+    const invalido = n == null || (k === 'rech' ? (n < 0 || n > 1) : n <= 0);
+    (invalido ? remove(r) : set(r, n)).catch(guardarError);
+    inp.value = fmtP(invalido ? DEF[k] : n);
+  });
+  $('impGo').onclick = importarSemanas;
+}
+
+/* pega de la hoja 1 - Detalle de Faena, columnas L a W: semana, VA TP, VA UE, NV C/Kosher USA, NV S/Kosher, NV C/Kosher, S/Kosher 481, Kosher USA 481, (vacía), C/Kosher 481, (vacía), Total */
+function importarSemanas() {
+  let ok = 0; const fuera = [];
+  $('impTxt').value.split(/\r?\n/).forEach(linea => {
+    if (!linea.trim()) return;
+    const c = linea.split('\t');
+    const m = /^\s*W?\s*0*(\d{1,2})\s*$/i.exec(c[0] || '');
+    if (!m) return;
+    const num = String(Number(m[1])).padStart(2, '0'), wk = 'Sem' + num;
+    if (!WEEKS.some(w => w.f === wk)) { fuera.push('W ' + num); return; }
+    const v = i => parseHeads(c[i]);
+    const obj = { vaTP: v(1), vaUE: v(2), nvCKU: v(3), nvSK: v(4), nvCK: v(5), e481SK: v(6), e481KU: v(7), e481CK: v(9) };
+    Object.keys(obj).forEach(k => { if (!obj[k]) delete obj[k]; });
+    const r = ref(db, 'semanas/cabezas/' + wk);
+    (Object.keys(obj).length ? set(r, obj) : remove(r)).catch(guardarError);
+    ok++;
+  });
+  $('impMsg').textContent = ok
+    ? 'Se cargaron ' + ok + (ok === 1 ? ' semana' : ' semanas') + '.' + (fuera.length ? ' Se omitieron las que no están en la tabla: ' + fuera.join(', ') + '.' : '')
+    : 'No encontré semanas. Copiá desde la columna L (donde dice W 44) hasta la W.';
+  if (ok) $('impTxt').value = '';
+}
+
+function pintarFaena() {
+  $('tbCab').querySelectorAll('input').forEach(inp => {
+    if (document.activeElement === inp) return;
+    const n = hd(inp.dataset.wk, inp.dataset.h);
+    inp.value = n ? fmt(n) : '';
+  });
+  $('tbCab').querySelectorAll('[data-tot]').forEach(td => {
+    const t = CAB.reduce((s, x) => s + hd(td.dataset.tot, x.f), 0);
+    td.textContent = t ? fmt(t) : '—';
+  });
+  const tot = {};
+  CORTES.forEach(k => { tot[k] = 0; });
+  $('tbCortes').innerHTML = WEEKS.map(w => {
+    const e = explotar(w.f);
+    CORTES.forEach(k => { tot[k] += e[k]; });
+    return '<tr><td class="t"><b>' + esc(w.f) + '</b></td><td class="t" style="color:var(--muted)">' + esc(w.fe) + '</td>' +
+      CORTES.map(k => '<td class="num' + (CORTES_SEP[k] ? ' sep' : '') + '">' + (e[k] ? fmt(e[k]) : '—') + '</td>').join('') + '</tr>';
+  }).join('');
+  $('tfCortes').innerHTML = '<tr><td class="t" colspan="2">Total</td>' +
+    CORTES.map(k => '<td class="num' + (CORTES_SEP[k] ? ' sep' : '') + '">' + (tot[k] ? fmt(tot[k]) : '—') + '</td>').join('') + '</tr>';
   document.querySelectorAll('[data-p]').forEach(inp => {
     if (document.activeElement !== inp) inp.value = fmtP(pv(inp.dataset.p));
   });
 }
-document.querySelector('.parg').addEventListener('change', ev => {
-  const inp = ev.target;
-  if (!inp.dataset || !inp.dataset.p) return;
-  const k = inp.dataset.p, n = parseNum(inp.value);
-  const r = ref(db, 'semanas/parametros/' + k);
-  const invalido = n == null || n <= 0;
-  (invalido ? remove(r) : set(r, n)).catch(guardarError);
-  inp.value = fmtP(invalido ? DEF[k] : n);
-});
 
 /* ---------- pestañas ---------- */
 let vista = 'disp';
 function mostrar(v) {
   vista = v;
-  ['disp', 'res', 'carga'].forEach(k => { $('v-' + k).hidden = k !== v; });
+  ['disp', 'res', 'faena', 'carga'].forEach(k => { $('v-' + k).hidden = k !== v; });
   document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.v === v ? 'true' : 'false'));
 }
 document.querySelector('.tabs').addEventListener('click', ev => {
@@ -767,6 +932,7 @@ function refrescar() {
   pintarTabla();
   pintarReservas();
   pintarCarga();
+  pintarFaena();
   if (cur) dibujarDetalle();
 }
 
@@ -796,6 +962,7 @@ onAuthStateChanged(auth, user => {
   $('login').hidden = true; $('app').hidden = false; $('who').hidden = false;
   $('whoMail').textContent = user.email || '';
   construirCarga();
+  construirFaena();
   mostrar(vista);
   setEstado('Conectando…', false);
   desuscribir = onValue(ref(db, 'semanas'),
