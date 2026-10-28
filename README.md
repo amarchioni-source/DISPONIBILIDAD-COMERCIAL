@@ -6,11 +6,11 @@ Página para que los comerciales vean el volumen disponible por semana de faena 
 
 La página tiene tres pestañas:
 
-- **Disponibilidad:** arriba, tres números (volumen disponible, tomado por clientes y todavía sin cliente) y una barra con el reparto por cliente, cada uno con su color. Después, una tarjeta por época (Aéreos, Marítimos, Full levy) y un total, con las fechas de cada una. Abajo, la tabla por semana de faena: cada celda muestra **disponible, tomado y libre**, la barra con los clientes y sus toneladas. Al tocar una celda se abre el cuadro para **reservar a un cliente**: cliente, comercial y toneladas.
+- **Disponibilidad:** arriba, tres números: **total**, **con cliente asignado** y **sin cliente asignado**, con una barra del reparto por cliente (cada uno con su color). Abajo, la tabla por semana de faena: cada celda muestra total, con cliente y sin cliente, la barra y los clientes con sus toneladas. Al tocar una celda se abre el cuadro para **asignar a un cliente**: cliente, comercial y toneladas.
 - **Reservas:** lista de todo lo reservado, con filtro por comercial y búsqueda por cliente, y el total de toneladas por cliente (por ejemplo M2000 o Fritz).
 - **Carga de volumen:** donde se cargan las cabezas de cada semana, el volumen de Menaker, R&L 481 y Sets 481, y los factores de cálculo.
 
-En cada celda, el número verde es lo libre, el azul lo tomado por clientes y la franja rayada de la barra lo que todavía no tiene cliente. Si todo está tomado queda en gris, y si se reservó de más se marca en rojo. Todo está en toneladas y se actualiza en vivo para los que tengan la página abierta.
+En cada celda, el número verde es lo que no tiene cliente asignado y el azul lo que sí. Si se asignó más que el total, la celda se marca en rojo. Todo está en toneladas y se actualiza en vivo para los que tengan la página abierta.
 
 ## Cómo se calcula el disponible
 
