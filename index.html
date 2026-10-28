@@ -271,6 +271,7 @@
         <textarea class="imp" id="impTxt" placeholder="W 44&#9;0&#9;1000&#9;&#9;1450&#9;0&#9;0&#9;&#9;&#9;0&#9;&#9;2450"></textarea>
         <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="btn pri" id="impGo" type="button">Cargar semanas</button>
+          <button class="btn" id="impBase" type="button">Restaurar faena proyectada del 26/10</button>
           <span class="parn" id="impMsg" style="margin:0"></span>
         </div>
       </details>
@@ -524,6 +525,9 @@ function setEstado(txt, bad) {
   n.className = 'note' + (bad ? ' bad' : '');
 }
 const guardarError = e => setEstado('No se pudo guardar (' + (e && e.code ? e.code : 'error') + '). Revisá la conexión y las reglas de Firebase.', true);
+
+/* Faena proyectada inicial (Excel del 26/10, semanas 44 a 04). Se carga una sola vez en Firebase; después se edita desde la página. */
+const BASE = {"Sem44":{"vaUE":1000,"nvSK":1450},"Sem45":{"vaUE":400,"e481SK":2050},"Sem46":{"e481SK":2750},"Sem47":{"e481SK":920,"e481CK":1400},"Sem48":{"nvCK":500,"e481SK":1000,"e481CK":1250},"Sem49":{"nvSK":850,"nvCK":1750},"Sem50":{"nvSK":400,"nvCK":700,"e481SK":600,"e481CK":1050},"Sem51":{"nvSK":950,"nvCK":1000,"e481SK":400,"e481CK":800},"Sem52":{"nvSK":950,"nvCK":700},"Sem01":{"nvSK":400,"nvCK":700},"Sem02":{"nvCKU":750,"nvSK":200,"nvCK":1750},"Sem03":{"nvCKU":750,"nvSK":200,"nvCK":1750},"Sem04":{"nvCKU":750,"nvSK":150,"nvCK":1750}};
 
 /* ---------- datos ---------- */
 let cells = {};   // { semana: { producto: { kg, asig: { id: {cliente, comercial, kg, ts} } } } }
@@ -809,6 +813,10 @@ function construirFaena() {
     inp.value = fmtP(invalido ? DEF[k] : n);
   });
   $('impGo').onclick = importarSemanas;
+  $('impBase').onclick = () => {
+    if (!window.confirm('Se reemplazan todas las cabezas cargadas por la faena proyectada del 26/10 (semanas 44 a 04). ¿Seguir?')) return;
+    set(ref(db, 'semanas/cabezas'), BASE).then(() => { $('impMsg').textContent = 'Se restauró la faena proyectada del 26/10.'; }).catch(guardarError);
+  };
 }
 
 /* pega de la hoja 1 - Detalle de Faena, columnas L a W: semana, VA TP, VA UE, NV C/Kosher USA, NV S/Kosher, NV C/Kosher, S/Kosher 481, Kosher USA 481, (vacía), C/Kosher 481, (vacía), Total */
@@ -991,6 +999,7 @@ $('lgPass').onkeydown = ev => { if (ev.key === 'Enter') ingresar(); };
 $('salir').onclick = () => signOut(auth);
 
 let desuscribir = null;
+let sembrando = false;
 onAuthStateChanged(auth, user => {
   if (desuscribir) { desuscribir(); desuscribir = null; }
   if (!user) {
@@ -1009,7 +1018,16 @@ onAuthStateChanged(auth, user => {
     snap => {
       const d = snap.val() || {};
       cells = d.celdas || {}; cab = d.cabezas || {}; params = d.parametros || {};
-      setEstado('Conectado. Los cambios se ven en vivo en todos los que tengan la página abierta.', false);
+      let msg = 'Conectado. Los cambios se ven en vivo en todos los que tengan la página abierta.';
+      if (!(d.meta && d.meta.sembrado) && !sembrando) {
+        sembrando = true;
+        if (!d.cabezas) {
+          set(ref(db, 'semanas/cabezas'), BASE).catch(guardarError);
+          msg = 'Se cargó la faena proyectada de las semanas 44 a 04 (Excel del 26/10). Podés editarla en Faena y cortes.';
+        }
+        set(ref(db, 'semanas/meta/sembrado'), true).catch(guardarError);
+      }
+      setEstado(msg, false);
       refrescar();
     },
     err => setEstado('No se pueden leer los datos (' + (err && err.code ? err.code : 'error') + '). Revisá las reglas de Firebase para la ruta semanas.', true));
