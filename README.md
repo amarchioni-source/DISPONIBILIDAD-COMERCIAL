@@ -1,33 +1,25 @@
 # Disponibilidad comercial
 
-Tabla editable para que los comerciales vean el volumen disponible por semana y lo asignen a clientes. Es un único archivo (`index.html`) que guarda los datos en Firebase Realtime Database, así que no necesita servidor propio.
+Página para que los comerciales vean el volumen disponible por semana de faena y lo reserven para un cliente. Es un único archivo (`index.html`) que guarda los datos en Firebase Realtime Database, así que no necesita servidor propio.
 
-## Qué hace
+## Cómo se usa
 
-- Tabla por semana de faena con las columnas B. Ancho Hilton, R&L Hilton (con M2000 y Fritz), Menaker, R&L 481 y Sets 481. Volúmenes en toneladas.
-- **El disponible de B. Ancho Hilton y R&L Hilton se calcula solo** a partir de las cabezas NV (no vendidas) de cada semana, con las fórmulas de la planilla PROY 481 y NH.
-- Detalle de clientes por celda (cliente, comercial y tn), con indicador de color: verde si todo está asignado, amarillo si falta y rojo si se pasa.
-- **Saldo acumulado** en B. Ancho Hilton y R&L Hilton: arrastra lo que sobra o falta de una semana a la siguiente.
-- Totales por época (Aéreos, Marítimos, Full levy) y total general arriba, con el rango de fechas de cada época.
-- Cambios en vivo para todos los que tengan la página abierta.
+La página tiene tres pestañas:
+
+- **Disponibilidad:** arriba, una tarjeta por época (Aéreos, Marítimos, Full levy) y un total, con las fechas de cada una. Abajo, la tabla por semana de faena con el volumen libre de cada producto. Al tocar una celda se abre el cuadro para **reservar a un cliente**: cliente, comercial y toneladas.
+- **Reservas:** lista de todo lo reservado, con filtro por comercial y búsqueda por cliente, y el total de toneladas por cliente (por ejemplo M2000 o Fritz).
+- **Carga de volumen:** donde se cargan las cabezas de cada semana, el volumen de Menaker, R&L 481 y Sets 481, y los factores de cálculo.
+
+Colores de cada celda: verde si queda volumen libre, gris si está todo reservado y rojo si se reservó de más. Todo está en toneladas y se actualiza en vivo para los que tengan la página abierta.
 
 ## Cómo se calcula el disponible
 
-Se cargan, por semana de faena, las cabezas **NV c/Kosher** (K) y **NV s/Kosher** (L).
+Se cargan, por semana de faena, las cabezas **NV c/Kosher** (K) y **NV s/Kosher** (L). El resto sale de las fórmulas de la planilla PROY 481 y NH:
 
 - Disponible B. Ancho Hilton = `(K × 0,35 + L) × 2,5 × 2 / 1000`
 - Disponible R&L Hilton = `(K + L) × 7,7 × 2 / 1000`
 
-Son las fórmulas de la fila de Sem 44 de la hoja `PROY 481 y NH`. Los factores (7,7 kg de R&L, 2,5 kg de B. Ancho, 0,35 y 2 medias por cabeza) se pueden cambiar en el panel **Factores de cálculo** de la página y valen para todas las semanas.
-
-Saldo acumulado de una semana = saldo anterior + disponible − asignado. Arranca con el **saldo inicial** configurable en el mismo panel (0,7 tn para B. Ancho Hilton, el valor que arrastra la planilla en Sem 44, y 0 para R&L Hilton).
-
-## Cómo se reparte
-
-- **B. Ancho Hilton:** el botón Clientes asigna lo calculado a clientes.
-- **R&L Hilton:** el disponible calculado se reparte entre **M2000** y **Fritz**. Cada una tiene su botón Clientes, y el disponible muestra cuánto queda libre.
-- **Menaker, R&L 481 y Sets 481:** el disponible se carga a mano y se asigna con el botón Clientes.
-- **Stk Caj y Stk Q:** se cargan a mano y no entran en los totales.
+Los factores (7,7 kg de R&L, 2,5 kg de B. Ancho, 0,35 y 2 medias por cabeza) se cambian en la pestaña **Carga de volumen** y valen para todas las semanas. Menaker, R&L 481 y Sets 481 se cargan a mano. Stk Caj y Stk Q son informativos y no entran en los totales.
 
 ## Estructura del proyecto
 
@@ -45,9 +37,11 @@ semanas-comerciales/
 Todo vive bajo la ruta `semanas`:
 
 - `semanas/cabezas/<semana>/nvCK` y `nvSK`: cabezas NV de cada semana.
-- `semanas/parametros/<clave>`: factores de cálculo (`rl`, `ba`, `f`, `m`, `sIniA`, `sIniR`).
-- `semanas/celdas/<semana>/<columna>/kg`: disponible cargado a mano (Menaker, R&L 481, Sets 481 y Stk).
-- `semanas/celdas/<semana>/<columna>/asig/<id>`: cada asignación, con `cliente`, `comercial`, `kg` (en tn) y `ts`.
+- `semanas/parametros/<clave>`: factores de cálculo (`rl`, `ba`, `f`, `m`).
+- `semanas/celdas/<semana>/<producto>/kg`: volumen cargado a mano (Menaker, R&L 481, Sets 481 y Stk).
+- `semanas/celdas/<semana>/<producto>/asig/<id>`: cada reserva, con `cliente`, `comercial`, `kg` (en tn) y `ts`.
+
+Los productos son `ancho` (B. Ancho Hilton), `rlh` (R&L Hilton), `menaker`, `rl481` y `sets481`.
 
 ## Puesta en marcha
 
