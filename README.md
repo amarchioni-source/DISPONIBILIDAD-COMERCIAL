@@ -29,6 +29,8 @@ Las cabezas por semana se cargan en **Faena y cortes**. Para no tipearlas, en la
 - Kosher: R&L `J × 8 × 2` y Rueda `J × 17 × 2`.
 - Garr/Tort/Braz `I × 10,5 × 2 + J × 3,45 × 2` y Cogote `I × 3,5 × 2`.
 
+**Efecto del kosher** (tabla en Faena y cortes): por semana, el B. Ancho de Hilton que no cuenta por ser kosher (`K × 2,5 × 2 × 0,65`), las cabezas de 481 rechazadas y aptas, el R&L y la Rueda que salen como kosher, y los cortes que dejan de producirse (Pecho, B. Ancho, Cogote y la diferencia de Garr/Tort/Braz de las cabezas aptas).
+
 Todo se muestra en toneladas. Las fórmulas y los factores son los de la planilla PROY 481 y NH para las semanas 44 a 04, y los factores se ajustan en el panel **Rendimientos por media res** (valen para todas las semanas). En la planilla, la semana 44 no aplica el rechazo, pero ese dato no cambia nada porque no tiene cabezas c/Kosher de 481. La planilla también calcula el volumen de no Hilton (NH), que no se replicó.
 
 Menaker, R&L 481 y Sets 481 se cargan a mano. Stk Caj y Stk Q son informativos y no entran en los totales.
