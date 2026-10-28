@@ -15,6 +15,8 @@ En cada celda, el número verde es lo que no tiene cliente asignado y el azul lo
 
 ## Cómo se calcula
 
+La primera vez que alguien entra, la página carga sola la **faena proyectada de las semanas 44 a 04** (Excel del 26/10), que viene incluida en `index.html`, y la guarda en Firebase. Si ya había cabezas cargadas no las pisa. Después se editan en **Faena y cortes**, y el botón **Restaurar faena proyectada del 26/10** vuelve a los valores originales.
+
 Las cabezas por semana se cargan en **Faena y cortes**. Para no tipearlas, en la hoja `1 - Detalle de Faena` del Excel seleccioná las filas de las semanas desde la columna **L hasta la W**, copiá y pegá en el panel **Cargar semanas desde el Excel**. Las semanas pegadas reemplazan las que ya estaban.
 
 **Disponible Hilton** (a partir de NV C/Kosher = K y NV S/Kosher = L):
