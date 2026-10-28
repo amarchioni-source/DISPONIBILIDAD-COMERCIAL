@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Semanas de faena y embarque</title>
+<!--
+  Datos en Firebase Realtime Database, ruta: semanas/celdas/<semana de faena>/<columna>
+    kg                      -> volumen disponible de esa celda
+    asig/<id>               -> {cliente, comercial, kg, ts}
+  Ingreso con correo y contraseña (usuario de Firebase Authentication).
+-->
+<style>
+  :root {
+    color-scheme: light;
+    box-sizing: border-box;
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b6b6b;
+    --border: #cfcfcf;
+    --head-bg: #f3f3f3;
+    --row-bg: #fce4d6;
+    --green: #1e8e3e;
+    --orange: #d9822b;
+    --red: #e11d1d;
+    --yellow-bg: #ffff00;
+    --yellow-text: #1e8e3e;
+    --sub-bg: #e8eef7;
+    --tot-bg: #d5e0f2;
+    --focus: #2563eb;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    padding: 24px 16px 48px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Calibri, Arial, "Helvetica Neue", sans-serif;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.sub { margin: 0; color: var(--muted); font-size: 13px; }
+  .who { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+  button { font: inherit; cursor: pointer; }
+  .btn { border: 1px solid var(--border); background: #fff; color: var(--text); border-radius: 4px; padding: 5px 12px; font-size: 13px; }
+  .btn:hover { border-color: var(--focus); color: var(--focus); }
+  .btn.pri { background: var(--focus); border-color: var(--focus); color: #fff; font-weight: 700; }
+  .btn.pri:hover { background: #1d4ed8; color: #fff; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* ingreso */
+  .login { max-width: 360px; margin: 40px auto; border: 1px solid var(--border); border-radius: 6px; padding: 20px; }
+  .login h2 { margin: 0 0 4px; font-size: 16px; }
+  .login p { margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+  .login label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .login input { display: block; width: 100%; margin-top: 3px; border: 1px solid var(--border); border-radius: 4px; padding: 7px 9px; font: inherit; color: var(--text); }
+  .err { color: var(--red); font-size: 13px; margin-top: 10px; }
+
+  /* tabla */
+  .scroll { overflow-x: auto; max-width: 100%; }
+  table { border-collapse: collapse; width: 100%; min-width: 1060px; font-size: 15px; }
+  th, td { border: 1px solid var(--border); padding: 6px 12px; text-align: left; font-weight: 700; }
+  thead th { background: var(--head-bg); }
+  th.title { text-align: center; font-size: 17px; }
+  th.ctr { text-align: center; }
+  .blk td { background: var(--bg); color: var(--text); }
+  .sep td { border-top: 2px solid var(--text); }
+  .g td { background: var(--row-bg); color: var(--green); }
+  .o td { background: var(--row-bg); color: var(--orange); }
+  .r td { background: var(--row-bg); color: var(--red); }
+  td.y { background: var(--yellow-bg); color: var(--yellow-text); }
+  td.nw { white-space: nowrap; }
+
+  td.in { padding: 0; min-width: 108px; vertical-align: top; }
+  td.in input {
+    display: block; width: 100%; border: 0; background: transparent; color: inherit;
+    font: inherit; font-weight: 700; text-align: right; padding: 6px 10px 2px; outline: none;
+  }
+  td.in input:focus { box-shadow: inset 0 0 0 2px var(--focus); background: #fff; color: var(--text); }
+  .cl {
+    display: block; width: calc(100% - 12px); margin: 1px 6px 5px; padding: 1px 4px;
+    font-size: 11px; font-weight: 400; text-align: center; line-height: 1.5;
+    border: 1px solid var(--border); border-radius: 3px; background: #fff; color: var(--muted);
+  }
+  .cl:hover { border-color: var(--focus); color: var(--focus); }
+  .cl.par { background: #fff4d6; color: #8a5a00; border-color: #ecd28a; }
+  .cl.ok  { background: #e3f4e8; color: #1b7a3a; border-color: #a5d6b4; }
+  .cl.sob { background: #fde2e2; color: #b3261e; border-color: #f0a8a4; }
+
+  /* totales arriba */
+  #pie td { text-align: right; font-variant-numeric: tabular-nums; }
+  #pie td.lbl { text-align: left; white-space: nowrap; }
+  #pie .cap { display: block; font-size: 11px; font-weight: 400; color: var(--muted); line-height: 1.2; }
+  #pie .sm { display: block; font-size: 11px; font-weight: 400; color: var(--muted); line-height: 1.3; min-height: 14px; }
+  #pie .sm.neg { color: var(--red); }
+  tr.subr td { background: var(--sub-bg); color: var(--text); }
+  tr.tot td { background: var(--tot-bg); color: var(--text); border-bottom: 3px double var(--text); }
+
+  .note { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .note.bad { color: var(--red); }
+  .legend { margin-top: 6px; font-size: 13px; color: var(--muted); }
+
+  /* detalle de clientes */
+  .ov { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 12px 12px; overflow-y: auto; z-index: 20; }
+  .card { background: #fff; width: 100%; max-width: 640px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 8px 30px rgba(0,0,0,.25); }
+  .dh { display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+  .dt { font-size: 17px; font-weight: 700; }
+  .ds { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .dx { border: 0; background: none; font-size: 18px; color: var(--muted); padding: 2px 6px; }
+  .dsum { display: flex; gap: 22px; padding: 10px 16px; font-size: 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .dsum b { font-variant-numeric: tabular-nums; }
+  .dsum .neg { color: var(--red); }
+  .dsum .pos { color: var(--green); }
+  .dl { padding: 4px 16px; max-height: 38vh; overflow-y: auto; }
+  .dl table { min-width: 0; font-size: 14px; }
+  .dl th, .dl td { border: 0; border-bottom: 1px solid #ececec; padding: 6px 6px; font-weight: 400; }
+  .dl th { font-size: 12px; color: var(--muted); background: none; }
+  .dl td.r, .dl th.r { text-align: right; }
+  .dl input { width: 96px; text-align: right; border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font: inherit; }
+  .dl .del { border: 0; background: none; color: var(--muted); font-size: 15px; padding: 2px 6px; }
+  .dl .del:hover { color: var(--red); }
+  .dempty { padding: 14px 16px; font-size: 14px; color: var(--muted); }
+  .df { display: grid; grid-template-columns: 1.4fr 1.1fr .8fr auto; gap: 8px; padding: 12px 16px 16px; border-top: 1px solid var(--border); }
+  .df input { border: 1px solid var(--border); border-radius: 4px; padding: 7px 9px; font: inherit; min-width: 0; width: 100%; }
+  .dmsg { padding: 0 16px 12px; font-size: 13px; color: var(--red); }
+  @media (max-width: 560px) { .df { grid-template-columns: 1fr 1fr; } .df button { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>Semanas de faena y embarque</h1>
+      <p class="sub">Las fechas corresponden a la semana de faena (lunes a domingo). Sem01 a Sem04 son de 2027.</p>
+    </div>
+    <div class="who" id="who" hidden>
+      <span id="whoMail"></span>
+      <button class="btn" id="salir" type="button">Salir</button>
+    </div>
+  </div>
+
+  <section class="login" id="login">
+    <h2>Ingresar</h2>
+    <p>Usá el usuario de las semanas para ver y completar la tabla.</p>
+    <label>Correo<input type="text" id="lgMail" autocomplete="username"></label>
+    <label>Contraseña<input type="password" id="lgPass" autocomplete="current-password"></label>
+    <button class="btn pri" id="lgGo" type="button">Ingresar</button>
+    <div class="err" id="lgErr" hidden></div>
+  </section>
+
+  <section id="app" hidden>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="2">Época</th>
+            <th rowspan="2">Fechas faena</th>
+            <th class="title" colspan="2">SEMANA</th>
+            <th rowspan="2">B. Ancho Hilton</th>
+            <th class="ctr" colspan="2">R&amp;L Hilton</th>
+            <th rowspan="2">Menaker</th>
+            <th rowspan="2">R&amp;L 481</th>
+            <th rowspan="2">Sets 481</th>
+          </tr>
+          <tr><th>Faena</th><th>Embarque</th><th>M2000</th><th>Fritz</th></tr>
+        </thead>
+        <tbody id="pie"></tbody>
+        <tbody id="cuerpo"></tbody>
+      </table>
+    </div>
+    <div class="note" id="estado"></div>
+    <div class="legend">Escribí el volumen disponible en cada celda y tocá el botón de abajo para asignarlo a clientes. El botón queda verde cuando todo está asignado, amarillo si falta asignar y rojo si te pasás. Los totales arriba se actualizan solos y no incluyen Stk Caj ni Stk Q.</div>
+  </section>
+</div>
+
+<div class="ov" id="dlg" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <div class="dh">
+      <div><div class="dt" id="dTitle"></div><div class="ds" id="dSub"></div></div>
+      <button class="dx" id="dClose" type="button" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="dsum" id="dSum"></div>
+    <div class="dl" id="dList"></div>
+    <div class="df">
+      <input id="dCli" placeholder="Cliente" list="listCli" autocomplete="off">
+      <input id="dCom" placeholder="Comercial" list="listCom" autocomplete="off">
+      <input id="dKg" placeholder="Kg" inputmode="decimal" autocomplete="off">
+      <button class="btn pri" id="dAdd" type="button">Agregar</button>
+    </div>
+    <div class="dmsg" id="dMsg" hidden></div>
+    <datalist id="listCli"></datalist>
+    <datalist id="listCom"></datalist>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDNiruK_j-1Nf09eDbl4G5ix3eVe3GFlHo",
+  authDomain: "seguimiento-menudencias-anb.firebaseapp.com",
+  databaseURL: "https://seguimiento-menudencias-anb-default-rtdb.firebaseio.com",
+  projectId: "seguimiento-menudencias-anb",
+  storageBucket: "seguimiento-menudencias-anb.firebasestorage.app",
+  messagingSenderId: "974200723687",
+  appId: "1:974200723687:web:17fc79f74dd8d878206a42",
+  measurementId: "G-RN0M9WXVP6"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const MSG = {
+  'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+  'auth/wrong-password': 'Correo o contraseña incorrectos.',
+  'auth/user-not-found': 'Correo o contraseña incorrectos.',
+  'auth/invalid-email': 'El correo no tiene un formato válido.',
+  'auth/too-many-requests': 'Demasiados intentos. Esperá unos minutos y volvé a probar.',
+  'auth/network-request-failed': 'Sin conexión con Firebase. Revisá internet.'
+};
+
+/* ---------- estructura de la tabla ---------- */
+const COLS = ['ancho', 'm2000', 'fritz', 'menaker', 'rl481', 'sets481'];
+const LABELS = {
+  ancho: 'B. Ancho Hilton', m2000: 'R&L Hilton M2000', fritz: 'R&L Hilton Fritz',
+  menaker: 'Menaker', rl481: 'R&L 481', sets481: 'Sets 481'
+};
+const EPOCAS = ['Aéreos', 'Marítimos', 'Full levy'];
+const ROWS = [
+  { blk: true, f: 'Stk Caj', key: 'StkCaj' },
+  { blk: true, f: 'Stk Q', key: 'StkQ' },
+  { f: 'Sem44', e: 'Sem45', fe: '26/10 al 01/11', ep: 'Aéreos',    cls: 'g sep', ey: true },
+  { f: 'Sem45', e: 'Sem46', fe: '02/11 al 08/11', ep: 'Aéreos',    cls: 'g',     ey: true },
+  { f: 'Sem46', e: 'Sem47', fe: '09/11 al 15/11', ep: 'Marítimos', cls: 'g' },
+  { f: 'Sem47', e: 'Sem48', fe: '16/11 al 22/11', ep: 'Aéreos',    cls: 'o' },
+  { f: 'Sem48', e: 'Sem49', fe: '23/11 al 29/11', ep: 'Aéreos',    cls: 'o' },
+  { f: 'Sem49', e: 'Sem50', fe: '30/11 al 06/12', ep: 'Aéreos',    cls: 'o' },
+  { f: 'Sem50', e: 'Sem51', fe: '07/12 al 13/12', ep: 'Aéreos',    cls: 'o' },
+  { f: 'Sem51', e: 'Sem52', fe: '14/12 al 20/12', ep: 'Full levy', cls: 'r sep' },
+  { f: 'Sem52', e: 'Sem53', fe: '21/12 al 27/12', ep: 'Full levy', cls: 'r' },
+  { f: 'Sem53', e: 'Sem01', fe: '28/12 al 03/01', ep: 'Full levy', cls: 'r' },
+  { f: 'Sem01', e: 'Sem02', fe: '04/01 al 10/01', ep: 'Full levy', cls: 'r' },
+  { f: 'Sem02', e: 'Sem03', fe: '11/01 al 17/01', ep: 'Full levy', cls: 'r' },
+  { f: 'Sem03', e: 'Sem04', fe: '18/01 al 24/01', ep: 'Full levy', cls: 'r' },
+  { f: 'Sem04', e: 'Sem05', fe: '25/01 al 31/01', ep: 'Full levy', cls: 'r' }
+];
+const keyOf = r => r.key || r.f;
+
+/* ---------- utilidades ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => n.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+function parse(s) {
+  if (s == null) return 0;
+  s = String(s).trim().replace(/\s/g, '');
+  if (!s) return 0;
+  if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  const n = parseFloat(s);
+  return isFinite(n) && n > 0 ? n : 0;
+}
+function rangos(ep) {
+  const out = [];
+  let ini = null, fin = null, prev = -2;
+  ROWS.forEach((r, i) => {
+    if (r.blk || r.ep !== ep) return;
+    const p = r.fe.split(' al ');
+    if (ini !== null && i === prev + 1) { fin = p[1]; }
+    else { if (ini !== null) out.push(ini + ' al ' + fin); ini = p[0]; fin = p[1]; }
+    prev = i;
+  });
+  if (ini !== null) out.push(ini + ' al ' + fin);
+  return out.join(' y ');
+}
+function setEstado(txt, bad) {
+  const n = $('estado');
+  n.textContent = txt;
+  n.className = 'note' + (bad ? ' bad' : '');
+}
+const guardarError = e => setEstado('No se pudo guardar (' + (e && e.code ? e.code : 'error') + '). Revisá la conexión y las reglas de Firebase.', true);
+
+/* ---------- datos ---------- */
+let cells = {};   // { semana: { columna: { kg, asig: { id: {cliente, comercial, kg} } } } }
+const cell = (wk, c) => (cells[wk] && cells[wk][c]) || {};
+const kgOf = (wk, c) => Number(cell(wk, c).kg) || 0;
+const asigList = (wk, c) => Object.entries(cell(wk, c).asig || {}).map(([id, a]) => Object.assign({ id }, a));
+const asigOf = (wk, c) => asigList(wk, c).reduce((a, x) => a + (Number(x.kg) || 0), 0);
+const rutaCelda = (wk, c) => 'semanas/celdas/' + wk + '/' + c;
+
+/* ---------- tabla ---------- */
+let construida = false;
+function construirTabla() {
+  if (construida) return;
+  construida = true;
+
+  let h = '';
+  EPOCAS.forEach(ep => {
+    h += '<tr class="subr"><td class="lbl" colspan="4">Total ' + esc(ep) +
+      '<span class="cap">Faena: ' + esc(rangos(ep)) + '</span></td>' +
+      COLS.map(c => '<td data-sub="' + esc(ep) + '|' + c + '"><span class="cap">' + esc(LABELS[c]) +
+        '</span><span class="v">0</span><span class="sm"></span></td>').join('') + '</tr>';
+  });
+  h += '<tr class="tot"><td class="lbl" colspan="4">Total general<span class="cap">Todas las épocas</span></td>' +
+    COLS.map(c => '<td data-tot="' + c + '"><span class="cap">' + esc(LABELS[c]) +
+      '</span><span class="v">0</span><span class="sm"></span></td>').join('') + '</tr>';
+  $('pie').innerHTML = h;
+
+  let b = '';
+  ROWS.forEach(r => {
+    const k = keyOf(r);
+    const celdas = COLS.map(c =>
+      '<td class="in" data-wk="' + k + '" data-c="' + c + '">' +
+      '<input type="text" inputmode="decimal" autocomplete="off" aria-label="' + esc(r.f + ' ' + LABELS[c]) + '">' +
+      (r.blk ? '' : '<button class="cl" type="button">Clientes</button>') + '</td>').join('');
+    if (r.blk) {
+      b += '<tr class="blk"><td></td><td></td><td>' + esc(r.f) + '</td><td></td>' + celdas + '</tr>';
+    } else {
+      b += '<tr class="' + r.cls + '"><td>' + esc(r.ep) + '</td><td class="nw">' +
+        esc(r.fe).replace(/ /g, '&nbsp;') + '</td><td>' + esc(r.f) + '</td><td' +
+        (r.ey ? ' class="y"' : '') + '>' + esc(r.e) + '</td>' + celdas + '</tr>';
+    }
+  });
+  $('cuerpo').innerHTML = b;
+
+  const inputs = () => Array.prototype.slice.call($('cuerpo').querySelectorAll('input'));
+  $('cuerpo').addEventListener('change', ev => {
+    const inp = ev.target;
+    if (inp.tagName !== 'INPUT') return;
+    const td = inp.closest('td');
+    const r = rutaCelda(td.dataset.wk, td.dataset.c) + '/kg';
+    const n = parse(inp.value);
+    (n ? set(ref(db, r), n) : remove(ref(db, r))).catch(guardarError);
+    inp.value = n ? fmt(n) : '';
+  });
+  $('cuerpo').addEventListener('keydown', ev => {
+    const inp = ev.target;
+    if (inp.tagName !== 'INPUT') return;
+    let dir = 0;
+    if (ev.key === 'Enter') dir = ev.shiftKey ? -1 : 1;
+    else if (ev.key === 'ArrowDown') dir = 1;
+    else if (ev.key === 'ArrowUp') dir = -1;
+    if (!dir) return;
+    const arr = inputs();
+    const next = arr[arr.indexOf(inp) + dir * COLS.length];
+    if (next) { ev.preventDefault(); next.focus(); next.select(); }
+  });
+  $('cuerpo').addEventListener('click', ev => {
+    const btn = ev.target.closest('.cl');
+    if (!btn) return;
+    const td = btn.closest('td');
+    abrirDetalle(td.dataset.wk, td.dataset.c);
+  });
+}
+
+function pintarCelda(td) {
+  const wk = td.dataset.wk, c = td.dataset.c;
+  const inp = td.querySelector('input');
+  const kg = kgOf(wk, c);
+  if (document.activeElement !== inp) inp.value = kg ? fmt(kg) : '';
+  const btn = td.querySelector('.cl');
+  if (!btn) return;
+  const lista = asigList(wk, c);
+  const a = lista.reduce((s, x) => s + (Number(x.kg) || 0), 0);
+  let cls = 'cl', txt = 'Clientes';
+  if (lista.length) {
+    txt = 'Asignado ' + fmt(a) + ' de ' + fmt(kg);
+    cls += a > kg + 0.5 ? ' sob' : (kg > 0 && Math.abs(a - kg) <= 0.5 ? ' ok' : ' par');
+  }
+  btn.className = cls;
+  btn.textContent = txt;
+}
+
+function pintarTotal(td, disp, asig) {
+  td.querySelector('.v').textContent = fmt(disp);
+  const sm = td.querySelector('.sm');
+  if (!disp && !asig) { sm.textContent = ''; sm.className = 'sm'; return; }
+  const libre = disp - asig;
+  sm.textContent = 'asignado ' + fmt(asig) + ' · libre ' + fmt(libre);
+  sm.className = 'sm' + (libre < -0.5 ? ' neg' : '');
+}
+
+function recalcular() {
+  const disp = {}, asig = {}, dTot = {}, aTot = {};
+  ROWS.forEach(r => {
+    if (r.blk) return;
+    COLS.forEach(c => {
+      const k = r.ep + '|' + c, kg = kgOf(r.f, c), a = asigOf(r.f, c);
+      disp[k] = (disp[k] || 0) + kg; asig[k] = (asig[k] || 0) + a;
+      dTot[c] = (dTot[c] || 0) + kg; aTot[c] = (aTot[c] || 0) + a;
+    });
+  });
+  $('pie').querySelectorAll('[data-sub]').forEach(td => pintarTotal(td, disp[td.dataset.sub] || 0, asig[td.dataset.sub] || 0));
+  $('pie').querySelectorAll('[data-tot]').forEach(td => pintarTotal(td, dTot[td.dataset.tot] || 0, aTot[td.dataset.tot] || 0));
+}
+
+function refrescar() {
+  $('cuerpo').querySelectorAll('td.in').forEach(pintarCelda);
+  recalcular();
+  if (cur) dibujarDetalle();
+}
+
+/* ---------- detalle de clientes ---------- */
+let cur = null;
+function abrirDetalle(wk, c) {
+  cur = { wk, c };
+  dibujarDetalle();
+  $('dlg').hidden = false;
+  let com = ''; try { com = localStorage.getItem('sem_comercial') || ''; } catch (e) {}
+  if (!$('dCom').value) $('dCom').value = com;
+  $('dCli').focus();
+}
+function cerrarDetalle() { cur = null; $('dlg').hidden = true; $('dMsg').hidden = true; }
+
+function dibujarDetalle() {
+  const { wk, c } = cur;
+  const row = ROWS.find(r => keyOf(r) === wk);
+  const kg = kgOf(wk, c), lista = asigList(wk, c);
+  const a = lista.reduce((s, x) => s + (Number(x.kg) || 0), 0), libre = kg - a;
+  $('dTitle').textContent = row.f + ' · ' + LABELS[c];
+  $('dSub').textContent = row.ep + ' · faena ' + row.fe + ' · embarque ' + row.e;
+  $('dSum').innerHTML =
+    '<span>Disponible <b>' + fmt(kg) + '</b></span>' +
+    '<span>Asignado <b>' + fmt(a) + '</b></span>' +
+    '<span>Libre <b class="' + (libre < -0.5 ? 'neg' : 'pos') + '">' + fmt(libre) + '</b></span>';
+
+  if (!lista.length) {
+    $('dList').innerHTML = '<div class="dempty">Todavía no hay clientes asignados. Cargá el primero abajo.</div>';
+  } else {
+    lista.sort((x, y) => (x.ts || 0) - (y.ts || 0));
+    $('dList').innerHTML = '<table><thead><tr><th>Cliente</th><th>Comercial</th><th class="r">Kg</th><th></th></tr></thead><tbody>' +
+      lista.map(x => '<tr><td>' + esc(x.cliente) + '</td><td>' + esc(x.comercial) + '</td>' +
+        '<td class="r"><input type="text" inputmode="decimal" value="' + esc(fmt(Number(x.kg) || 0)) + '" data-id="' + esc(x.id) + '" aria-label="Kg de ' + esc(x.cliente) + '"></td>' +
+        '<td><button class="del" type="button" data-del="' + esc(x.id) + '" aria-label="Quitar a ' + esc(x.cliente) + '">✕</button></td></tr>').join('') +
+      '</tbody></table>';
+  }
+  const m = $('dMsg');
+  if (libre < -0.5) { m.textContent = 'La asignación supera lo disponible por ' + fmt(-libre) + ' kg.'; m.hidden = false; }
+  else m.hidden = true;
+
+  const cli = new Set(), com = new Set();
+  Object.values(cells).forEach(w => Object.values(w || {}).forEach(x => Object.values((x && x.asig) || {}).forEach(y => {
+    if (y.cliente) cli.add(y.cliente); if (y.comercial) com.add(y.comercial);
+  })));
+  $('listCli').innerHTML = Array.from(cli).sort().map(v => '<option value="' + esc(v) + '">').join('');
+  $('listCom').innerHTML = Array.from(com).sort().map(v => '<option value="' + esc(v) + '">').join('');
+}
+
+$('dList').addEventListener('change', ev => {
+  const inp = ev.target;
+  if (!cur || !inp.dataset || !inp.dataset.id) return;
+  const n = parse(inp.value);
+  const r = rutaCelda(cur.wk, cur.c) + '/asig/' + inp.dataset.id + '/kg';
+  (n ? set(ref(db, r), n) : remove(ref(db, rutaCelda(cur.wk, cur.c) + '/asig/' + inp.dataset.id))).catch(guardarError);
+});
+$('dList').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-del]');
+  if (!b || !cur) return;
+  remove(ref(db, rutaCelda(cur.wk, cur.c) + '/asig/' + b.dataset.del)).catch(guardarError);
+});
+function agregar() {
+  if (!cur) return;
+  const cliente = $('dCli').value.trim(), comercial = $('dCom').value.trim(), kg = parse($('dKg').value);
+  const m = $('dMsg');
+  if (!cliente || !kg) {
+    m.textContent = 'Completá el cliente y los kg para agregar.'; m.hidden = false;
+    (cliente ? $('dKg') : $('dCli')).focus();
+    return;
+  }
+  try { localStorage.setItem('sem_comercial', comercial); } catch (e) {}
+  const id = 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  set(ref(db, rutaCelda(cur.wk, cur.c) + '/asig/' + id), { cliente, comercial, kg, ts: Date.now() }).catch(guardarError);
+  $('dCli').value = ''; $('dKg').value = '';
+  $('dCli').focus();
+}
+$('dAdd').onclick = agregar;
+$('dKg').onkeydown = ev => { if (ev.key === 'Enter') agregar(); };
+$('dCli').onkeydown = ev => { if (ev.key === 'Enter') $('dCom').focus(); };
+$('dCom').onkeydown = ev => { if (ev.key === 'Enter') $('dKg').focus(); };
+$('dClose').onclick = cerrarDetalle;
+$('dlg').addEventListener('click', ev => { if (ev.target === $('dlg')) cerrarDetalle(); });
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && cur) cerrarDetalle(); });
+
+/* ---------- ingreso ---------- */
+try { $('lgMail').value = localStorage.getItem('sem_email') || ''; } catch (e) {}
+async function ingresar() {
+  const mail = $('lgMail').value.trim(), pass = $('lgPass').value;
+  const er = $('lgErr'); er.hidden = true;
+  if (!mail || !pass) return;
+  try { localStorage.setItem('sem_email', mail); } catch (e) {}
+  try { await signInWithEmailAndPassword(auth, mail, pass); }
+  catch (e) { er.textContent = MSG[e.code] || ('No se pudo ingresar (' + (e.code || 'error') + ').'); er.hidden = false; }
+}
+$('lgGo').onclick = ingresar;
+$('lgPass').onkeydown = ev => { if (ev.key === 'Enter') ingresar(); };
+$('salir').onclick = () => signOut(auth);
+
+let desuscribir = null;
+onAuthStateChanged(auth, user => {
+  if (desuscribir) { desuscribir(); desuscribir = null; }
+  if (!user) {
+    cells = {}; cerrarDetalle();
+    $('app').hidden = true; $('who').hidden = true; $('login').hidden = false;
+    $('lgPass').value = '';
+    return;
+  }
+  $('login').hidden = true; $('app').hidden = false; $('who').hidden = false;
+  $('whoMail').textContent = user.email || '';
+  construirTabla();
+  setEstado('Conectando…', false);
+  desuscribir = onValue(ref(db, 'semanas/celdas'),
+    snap => { cells = snap.val() || {}; setEstado('Conectado. Los cambios se ven en vivo en todos los que tengan la página abierta.', false); refrescar(); },
+    err => setEstado('No se pueden leer los datos (' + (err && err.code ? err.code : 'error') + '). Revisá las reglas de Firebase para la ruta semanas.', true));
+});
+</script>
+</body>
+</html>

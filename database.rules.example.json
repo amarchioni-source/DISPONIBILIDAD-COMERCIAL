@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "programa": {
+      ".read": "auth != null && auth.token.email == 'CORREO_MENUDENCIAS'",
+      ".write": "auth != null && auth.token.email == 'CORREO_MENUDENCIAS'"
+    },
+    "programaVentas": {
+      ".read": "auth != null && auth.token.email == 'CORREO_MENUDENCIAS'",
+      ".write": "auth != null && auth.token.email == 'CORREO_MENUDENCIAS'"
+    },
+    "semanas": {
+      ".read": "auth != null && auth.token.email == 'CORREO_SEMANAS'",
+      ".write": "auth != null && auth.token.email == 'CORREO_SEMANAS'"
+    }
+  }
+}

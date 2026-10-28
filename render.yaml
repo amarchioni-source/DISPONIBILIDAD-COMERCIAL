@@ -1,0 +1,7 @@
+# Opcional: Render lo usa si creás el servicio desde un Blueprint.
+# Si lo creás a mano como Static Site, no hace falta.
+services:
+  - type: web
+    name: semanas-comerciales
+    runtime: static
+    staticPublishPath: .
