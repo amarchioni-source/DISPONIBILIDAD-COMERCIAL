@@ -319,6 +319,28 @@
       </div>
       <div class="hint">Cortes en toneladas (cabezas en unidades). 14 Ctes es la suma de Pecho, R&amp;L, B. Ancho y Rueda del 481 no kosher. Las cabezas c/Kosher de 481 se reparten entre kosher y no kosher según el rechazo.</div>
 
+      <h2 class="sec" style="margin-top:24px">Cómo afecta el kosher</h2>
+      <div class="scroll">
+        <table class="carga" style="min-width:1080px">
+          <thead>
+            <tr>
+              <th rowspan="2">Faena</th><th rowspan="2">Fechas</th>
+              <th class="g sep" colspan="2">Hilton</th>
+              <th class="g sep" colspan="6">481</th>
+              <th class="sep" rowspan="2">Total no producido</th>
+            </tr>
+            <tr>
+              <th class="sep">Cab. c/Kosher</th><th>B. Ancho que no cuenta</th>
+              <th class="sep">Cab. c/Kosher</th><th>Rechazadas</th><th>Aptas</th><th>R&amp;L y Rueda kosher</th><th>Cortes que no se producen</th>
+              <th>Garr/Tort/Braz de menos</th>
+            </tr>
+          </thead>
+          <tbody id="tbKosher"></tbody>
+          <tfoot id="tfKosher"></tfoot>
+        </table>
+      </div>
+      <div class="hint">Toneladas, salvo las cabezas. Hilton: el B. Ancho de las cabezas c/Kosher cuenta solo la parte configurada. 481: las cabezas c/Kosher se dividen en rechazadas (pasan a no kosher) y aptas; las aptas solo dan R&amp;L y Rueda kosher, y no producen Pecho, B. Ancho ni Cogote. Total no producido = B. Ancho de Hilton que no cuenta + cortes de 481 que no se producen + Garr/Tort/Braz de menos.</div>
+
       <details class="par" style="margin-top:18px">
         <summary>Rendimientos por media res (kg)</summary>
         <div class="parg" id="parg" style="margin-top:10px"></div>
@@ -744,11 +766,19 @@ function explotar(wk) {
     I, J, pecho, rl, ba, rueda, ctes: pecho + rl + ba + rueda,
     rlk: t(J, pv('rlk')), ruk: t(J, pv('ruk')),
     gt: t(I, pv('gt')) + t(J, pv('gtk')), co: t(I, pv('co')),
-    rlh: dispRlh(wk), bah: dispAncho(wk)
+    rlh: dispRlh(wk), bah: dispAncho(wk),
+    /* efecto del kosher */
+    K: hd(wk, 'nvCK'), kBA: hd(wk, 'nvCK') * pv('ba') * m * (1 - pv('f')) / 1000,
+    F, rechaz: pv('rech') * F, krlru: t(J, pv('rlk')) + t(J, pv('ruk')),
+    noProd: t(J, pv('pe') + pv('ba4') + pv('co')),
+    gtMenos: t(J, pv('gt') - pv('gtk')),
+    perdTot: hd(wk, 'nvCK') * pv('ba') * m * (1 - pv('f')) / 1000 + t(J, pv('pe') + pv('ba4') + pv('co')) + t(J, pv('gt') - pv('gtk'))
   };
 }
 const CORTES = ['I', 'pecho', 'rl', 'ba', 'rueda', 'ctes', 'J', 'rlk', 'ruk', 'gt', 'co', 'rlh', 'bah'];
 const CORTES_SEP = { I: 1, J: 1, gt: 1, rlh: 1 };
+const KOSH = ['K', 'kBA', 'F', 'rechaz', 'J', 'krlru', 'noProd', 'gtMenos', 'perdTot'];
+const KOSH_SEP = { K: 1, F: 1, perdTot: 1 };
 
 let faenaLista = false;
 function construirFaena() {
@@ -824,6 +854,16 @@ function pintarFaena() {
   }).join('');
   $('tfCortes').innerHTML = '<tr><td class="t" colspan="2">Total</td>' +
     CORTES.map(k => '<td class="num' + (CORTES_SEP[k] ? ' sep' : '') + '">' + (tot[k] ? fmt(tot[k]) : '—') + '</td>').join('') + '</tr>';
+  const tk = {};
+  KOSH.forEach(k => { tk[k] = 0; });
+  $('tbKosher').innerHTML = WEEKS.map(w => {
+    const e = explotar(w.f);
+    KOSH.forEach(k => { tk[k] += e[k]; });
+    return '<tr><td class="t"><b>' + esc(w.f) + '</b></td><td class="t" style="color:var(--muted)">' + esc(w.fe) + '</td>' +
+      KOSH.map(k => '<td class="num' + (KOSH_SEP[k] ? ' sep' : '') + '">' + (e[k] ? fmt(e[k]) : '—') + '</td>').join('') + '</tr>';
+  }).join('');
+  $('tfKosher').innerHTML = '<tr><td class="t" colspan="2">Total</td>' +
+    KOSH.map(k => '<td class="num' + (KOSH_SEP[k] ? ' sep' : '') + '">' + (tk[k] ? fmt(tk[k]) : '—') + '</td>').join('') + '</tr>';
   document.querySelectorAll('[data-p]').forEach(inp => {
     if (document.activeElement !== inp) inp.value = fmtP(pv(inp.dataset.p));
   });
