@@ -67,26 +67,30 @@
   .tab:hover { color: var(--text); }
   .tab[aria-selected="true"] { color: var(--blue); border-bottom-color: var(--blue); }
 
-  /* resumen */
-  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
-  .kp { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
-  .kp span { display: block; font-size: 13px; color: var(--muted); }
-  .kp b { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
-  .kp b small { font-size: 14px; font-weight: 600; color: var(--muted); }
-  .kp b.tom { color: var(--blue); }
-  .kp b.lib { color: var(--green); }
-  .kpbar { grid-column: 1 / -1; border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px 14px; }
-  .kpbar h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
-  .leyenda { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 11px; font-size: 13px; }
-  .leyenda .cc { font-size: 13px; }
+  /* resumen por época */
   .cc { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
   .cc i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); flex: none; }
-  .cc.lb i { background: repeating-linear-gradient(135deg, #8fd5ad, #8fd5ad 3px, #e8f7ee 3px, #e8f7ee 6px); }
   .seg { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: #eef1f5; margin-top: 7px; }
   .seg.gr { height: 18px; border-radius: 9px; margin-top: 0; }
   .seg .s { display: block; height: 100%; min-width: 3px; }
   .seg .libre { background: repeating-linear-gradient(135deg, #cbeed9, #cbeed9 5px, #e8f7ee 5px, #e8f7ee 10px); }
   .seg.over { box-shadow: 0 0 0 1.5px var(--red); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .ecard { border: 1px solid var(--line); border-top: 4px solid var(--c, var(--blue)); border-radius: 10px; padding: 12px 14px 6px; }
+  .ecard h3 { margin: 0; font-size: 15px; }
+  .ecard .fe { font-size: 12px; color: var(--muted); margin: 1px 0 8px; min-height: 17px; }
+  .ecard .resumen { background: var(--soft); border-radius: 8px; padding: 8px 10px 10px; margin-bottom: 4px; }
+  .prow { padding: 9px 0 10px; border-top: 1px solid #f0f2f5; }
+  .prow .nm { font-weight: 600; font-size: 13.5px; }
+  .prow .sinv { font-size: 12px; color: #b0b7c3; margin-left: 8px; }
+  .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 3px; }
+  .trio span { display: block; font-size: 11px; color: var(--muted); }
+  .trio b { font-size: 15px; font-variant-numeric: tabular-nums; }
+  .trio b.tom { color: var(--blue); }
+  .trio b.lib { color: var(--green); }
+  .trio b.neg { color: var(--red); }
+  .trio.big b { font-size: 21px; }
+  .vacio-hint { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
   .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; vertical-align: 0; }
 
 
@@ -217,7 +221,7 @@
 
     <!-- DISPONIBILIDAD -->
     <div id="v-disp">
-      <div class="kpis" id="kpis"></div>
+      <div class="cards" id="cards"></div>
       <h2 class="sec">Por semana de faena</h2>
       <div class="scroll">
         <table class="main">
@@ -396,6 +400,19 @@ function parseHeads(s) {
   const n = parseNum(s);
   return n != null && n > 0 ? n : 0;
 }
+function rangos(ep) {
+  const out = [];
+  let ini = null, fin = null, prev = -2;
+  WEEKS.forEach((r, i) => {
+    if (r.ep !== ep) return;
+    const p = r.fe.split(' al ');
+    if (ini !== null && i === prev + 1) { fin = p[1]; }
+    else { if (ini !== null) out.push(ini + ' al ' + fin); ini = p[0]; fin = p[1]; }
+    prev = i;
+  });
+  if (ini !== null) out.push(ini + ' al ' + fin);
+  return out.join(' y ');
+}
 function setEstado(txt, bad) {
   const n = $('estado');
   n.textContent = txt;
@@ -461,24 +478,31 @@ function sumas(filtro) {
   });
   return s;
 }
+function trio(d, a, grande) {
+  const libre = d - a, neg = libre < -TOL;
+  return '<div class="trio' + (grande ? ' big' : '') + '"><div><span>Total</span><b>' + fmt(d) + '</b></div>' +
+    '<div><span>Con cliente</span><b class="tom">' + fmt(a) + '</b></div>' +
+    '<div><span>' + (neg ? 'Excedido' : 'Sin cliente') + '</span><b class="' + (neg ? 'neg' : 'lib') + '">' + fmt(neg ? -libre : Math.max(libre, 0)) + '</b></div></div>';
+}
+function filaProducto(nombre, d, a, ep, k) {
+  if (!d && !a) return '<div class="prow"><span class="nm">' + esc(nombre) + '</span><span class="sinv">sin volumen</span></div>';
+  return '<div class="prow"><span class="nm">' + esc(nombre) + '</span>' + trio(d, a, false) + segBar(d, porCliente(reservasDe(ep, k))) + '</div>';
+}
 function pintarResumen() {
-  const s = sumas(null);
-  let d = 0, a = 0;
-  PRODS.forEach(p => { d += s[p.k].d; a += s[p.k].a; });
-  const grupos = porCliente(reservasDe(null, null));
-  const libre = d - a, over = libre < -TOL;
-  let h =
-    '<div class="kp"><span>Total</span><b>' + fmt(d) + ' <small>tn</small></b></div>' +
-    '<div class="kp"><span>Con cliente asignado</span><b class="tom">' + fmt(a) + ' <small>tn</small></b></div>' +
-    '<div class="kp"><span>' + (over ? 'Excedido' : 'Sin cliente asignado') + '</span><b class="lib"' + (over ? ' style="color:var(--red)"' : '') + '>' + fmt(Math.abs(libre)) + ' <small>tn</small></b></div>';
-  if (!d && !a) {
-    h += '<div class="kpbar"><h3>Todavía no hay volumen cargado. Cargá las cabezas de cada semana en <button class="link" id="irCarga" type="button">Carga de volumen</button> y acá aparece el total.</h3></div>';
-  } else {
-    h += '<div class="kpbar">' + segBar(d, grupos, 'gr') +
-      '<div class="leyenda">' + grupos.map(g => '<span class="cc" style="--c:' + colorCli(g.nombre) + '"><i></i>' + esc(g.nombre) + ' <b>' + fmt(g.kg) + ' tn</b></span>').join('') +
-      '<span class="cc lb"><i></i>Sin cliente <b>' + fmt(Math.max(libre, 0)) + ' tn</b></span></div></div>';
-  }
-  $('kpis').innerHTML = h;
+  const tarjeta = (titulo, sub, color, ss, ep) => {
+    let d = 0, a = 0;
+    PRODS.forEach(p => { d += ss[p.k].d; a += ss[p.k].a; });
+    return '<div class="ecard" style="--c:' + color + '"><h3>' + esc(titulo) + '</h3><div class="fe">' + esc(sub) + '</div>' +
+      '<div class="resumen">' + trio(d, a, true) + segBar(d, porCliente(reservasDe(ep, null)), 'gr') + '</div>' +
+      PRODS.map(p => filaProducto(p.label, ss[p.k].d, ss[p.k].a, ep, p.k)).join('') + '</div>';
+  };
+  const total = sumas(null);
+  let h = EPOCAS.map(ep => tarjeta(ep, 'Faena ' + rangos(ep), EPCOL[ep], sumas(ep), ep)).join('') +
+    tarjeta('Total', 'Todas las épocas', '#475467', total, null);
+  let hay = false;
+  PRODS.forEach(p => { if (total[p.k].d || total[p.k].a) hay = true; });
+  if (!hay) h += '<div class="vacio-hint">Todavía no hay volumen cargado. Cargá las cabezas de cada semana en <button class="link" id="irCarga" type="button">Carga de volumen</button> y acá aparecen los totales.</div>';
+  $('cards').innerHTML = h;
   const b = $('irCarga');
   if (b) b.onclick = () => mostrar('carga');
 }
